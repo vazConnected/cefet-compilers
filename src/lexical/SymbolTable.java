@@ -37,7 +37,7 @@ public class SymbolTable {
 	}
 	
 	public static TokenType get(String symbol) {
-		return SymbolTable.symbolTable.get(symbol);
+		return SymbolTable.symbolTable.getOrDefault(symbol, null);
 	}
 	
 	public static String get(TokenType symbol) {

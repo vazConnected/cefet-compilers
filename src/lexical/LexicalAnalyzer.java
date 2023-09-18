@@ -1,73 +1,62 @@
 package lexical;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PushbackInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import lexical.token.TokenPosition;
 import lexical.token.TokenType;
 
-public class LexicalAnalyzer implements AutoCloseable {
+public class LexicalAnalyzer {
 	private int lineCounter;
 	private int chracterInLineCounter;
-	private String filePath;
-	
-	private PushbackInputStream input;
+	private FileManager fileManager;
 
-	public LexicalAnalyzer(String filePath) throws FileNotFoundException {
-		this.filePath = filePath;
-		
-		this.input = new PushbackInputStream(new FileInputStream(this.filePath));
-		
+	public LexicalAnalyzer(String filename) throws IOException {
+		this.fileManager = new FileManager(filename);
 		this.lineCounter = 1;
 		this.chracterInLineCounter = 0;
 	}
-
-	public void close() throws IOException {
-		input.close();
-	}
-
-//	public int getLineNumber() {
-//		return this.lineCounter;
-//	}
 	
-	public List<Lexeme> getListOfLexemes() throws FileNotFoundException {
+	private void resetLexicalAnalyzer() throws IOException {
+		this.fileManager.reset();
 		this.lineCounter = 1;
 		this.chracterInLineCounter = 0;
-		
-		this.input = new PushbackInputStream(new FileInputStream(this.filePath));
-		
+	}
+	
+	public List<Lexeme> getListOfLexemes() throws IOException {
 		List<Lexeme> lexemes = new ArrayList<Lexeme>();
-		while (true) {
-			try {
-				lexemes.add(this.nextToken());
-			} catch (IOException e) {
-				break; // TODO: melhorar implementação. É necessário parar quando terminar o arquivo
-			}
+		this.resetLexicalAnalyzer();
+		
+		Lexeme lexeme = this.nextLexeme();
+		while (lexeme != null) {
+			lexemes.add(lexeme);
+			lexeme = this.nextLexeme();
 		}
 		
-		return lexemes;
+		this.fileManager.close();
 		
+		return lexemes;
 	}
 	
-	public boolean hasNextToken() {
-		// TODO
-		throw new RuntimeException("Implementar hasNextToken()");
+	private void newLine() {
+		this.lineCounter++;
+		this.chracterInLineCounter = 0;
 	}
-
-
-	public Lexeme nextToken() throws IOException {
-		TokenPosition tokenPosition = new TokenPosition(lineCounter, chracterInLineCounter);
-		String tokenValueBuffer = "";
+	
+	public Lexeme nextLexeme() throws IOException {
+		if (this.fileManager.endOfFileReached()) {
+			return null;
+		}
 		
 		Lexeme lexeme = null;
 
+		TokenPosition tokenPosition = new TokenPosition(lineCounter, chracterInLineCounter);
+		String tokenValueBuffer = "";
+
 		int state = 1;
 		while (state != 14 && state != 15) {
-			int currentChar = getc();
+			char currentChar = (char) this.fileManager.read();
 			chracterInLineCounter++;
 			
 			switch (state) {
@@ -75,20 +64,8 @@ public class LexicalAnalyzer implements AutoCloseable {
 					if (currentChar == ' ' || currentChar == '\t' || currentChar == '\r') {
 						state = 1;
 					} else if (currentChar == '\n') {
-						lineCounter++;
-						chracterInLineCounter = 0;
+						this.newLine();
 						state = 1;
-					} else if (currentChar == '/') {
-						tokenValueBuffer += (char) currentChar;
-						state = 2;
-					} else if (currentChar == '"') {
-						state = 6;
-					} else if (Character.isDigit(currentChar)) {
-						tokenValueBuffer += (char) currentChar;
-						state = 7;
-					} else if (Character.isLetter(currentChar)) {
-						tokenValueBuffer += (char) currentChar;
-						state = 10;
 					} else if (currentChar == '>' || currentChar == '<' || currentChar == '!' || currentChar == '=') {
 						tokenValueBuffer += (char) currentChar;
 						state = 11;
@@ -101,46 +78,62 @@ public class LexicalAnalyzer implements AutoCloseable {
 					} else if (currentChar == '+' || currentChar == '-' || currentChar == '*' || currentChar == ';' || currentChar == '(' || currentChar == ')' || currentChar == '{' || currentChar == '}') {
 						tokenValueBuffer += (char) currentChar;
 						state = 15;
+					} else if (currentChar == '/') {
+						state = 2;
+					} else if (Character.isLetter(currentChar)) {
+						tokenValueBuffer += (char) currentChar;
+						state = 10;
+					} else if (currentChar == '"') {
+						state = 6;
+					} else if (Character.isDigit(currentChar)) {
+						tokenValueBuffer += (char) currentChar;
+						state = 7;
 					} else {
 						tokenValueBuffer += (char) currentChar;
 						lexeme = new Lexeme(TokenType.INVALID_TOKEN, tokenValueBuffer, tokenPosition);
 						state = 15;
 					}
 					break;
-	
+					
 				case 2:
 					if (currentChar == '*') {
+						tokenValueBuffer += (char) currentChar;
 						state = 3;
 					} else if (currentChar == '/') {
+						tokenValueBuffer += (char) currentChar;
 						state = 5;
 					} else {
-						ungetc(currentChar);
+						this.fileManager.unget(currentChar);
 						state = 15;
 					}
 					break;
 	
 				case 3:
 					if (currentChar == '*') {
+						tokenValueBuffer += (char) currentChar;
 						state = 4;
 					} else if (currentChar == '\n') {
-						chracterInLineCounter++;
-						state = 3;
+						tokenValueBuffer += (char) currentChar;
+						this.newLine();
+						//state = 3;
 					} else if (currentChar == -1) {
 						lexeme = new Lexeme(TokenType.UNEXPECTED_EOF, tokenValueBuffer, tokenPosition);
 						state = 15;
 					} else {
-						state = 3;
+						tokenValueBuffer += (char) currentChar;
+						//state = 3;
 					}
 					break;
 	
 				case 4:
 					if (currentChar == '/') {
+						tokenValueBuffer += (char) currentChar;
 						state = 1;
 					} else if (currentChar == -1) {
 						lexeme = new Lexeme(TokenType.UNEXPECTED_EOF, tokenValueBuffer, tokenPosition);
 						state = 15;
 					} else if (currentChar == '\n') {
-						chracterInLineCounter++;
+						this.newLine();
 						state = 3;
 					} else {
 						state = 3;
@@ -149,6 +142,7 @@ public class LexicalAnalyzer implements AutoCloseable {
 	
 				case 5:
 					if (currentChar == '\n') {
+						this.newLine();
 						state = 1;
 					} else {
 						state = 5;
@@ -160,11 +154,11 @@ public class LexicalAnalyzer implements AutoCloseable {
 						lexeme = new Lexeme(TokenType.LITERAL, tokenValueBuffer, tokenPosition);
 						state = 14;
 					} else if (currentChar == -1) {
-						// lex.tokenValue = "";
 						lexeme = new Lexeme(TokenType.UNEXPECTED_EOF, tokenValueBuffer, tokenPosition);
 						state = 15;
 					} else if (currentChar == '\n') {
 						lexeme = new Lexeme(TokenType.INVALID_TOKEN, tokenValueBuffer, tokenPosition);
+						this.newLine();
 						state = 15;
 					} else if (currentChar > 31 && currentChar < 127) {
 						tokenValueBuffer += (char) currentChar;
@@ -180,7 +174,7 @@ public class LexicalAnalyzer implements AutoCloseable {
 						tokenValueBuffer += (char) currentChar;
 						state = 7;
 					} else {
-						ungetc(currentChar);
+						this.fileManager.unget(currentChar);
 						lexeme = new Lexeme(TokenType.INT_CONST, tokenValueBuffer, tokenPosition);
 						state = 14;
 					}
@@ -201,7 +195,7 @@ public class LexicalAnalyzer implements AutoCloseable {
 						tokenValueBuffer += (char) currentChar;
 						state = 9;
 					} else {
-						ungetc(currentChar);
+						this.fileManager.unget(currentChar);
 						lexeme = new Lexeme(TokenType.REAL_CONST, "", tokenPosition);
 						state = 14;
 					}
@@ -210,9 +204,9 @@ public class LexicalAnalyzer implements AutoCloseable {
 				case 10:
 					if (currentChar == '_' || Character.isLetter(currentChar) || Character.isDigit(currentChar)) {
 						tokenValueBuffer += (char) currentChar;
-						state = 5;
+						state = 10;
 					} else {
-						ungetc(currentChar);
+						this.fileManager.unget(currentChar);
 						state = 15;
 					}
 					break;
@@ -222,7 +216,7 @@ public class LexicalAnalyzer implements AutoCloseable {
 						tokenValueBuffer += (char) currentChar;
 						state = 15;
 					} else {
-						ungetc(currentChar);
+						this.fileManager.unget(currentChar);
 						state = 15;
 					}
 					break;
@@ -252,8 +246,9 @@ public class LexicalAnalyzer implements AutoCloseable {
 		}
 
 		if (state == 15) {
-			if ( lexeme != null && SymbolTable.contains(lexeme.tokenType())) {
-				lexeme = new Lexeme( SymbolTable.get(lexeme.tokenValue()), tokenValueBuffer, tokenPosition);
+			TokenType tokenType = SymbolTable.get(tokenValueBuffer);
+			if (tokenType != null) {
+				lexeme = new Lexeme(tokenType, tokenValueBuffer, tokenPosition);
 			} else {
 				lexeme = new Lexeme(TokenType.ID, tokenValueBuffer, tokenPosition);
 			}
@@ -262,17 +257,5 @@ public class LexicalAnalyzer implements AutoCloseable {
 		return lexeme;
 	}
 
-	private int getc() throws IOException {
-		int currentCharCode = input.read();
-		this.chracterInLineCounter++;
-		
-		return currentCharCode;
-	}
-
-	private void ungetc(int c) throws IOException {
-		if (c != -1) {
-			input.unread(c);
-			this.chracterInLineCounter--;
-		}
-	}
+	
 }

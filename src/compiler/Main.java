@@ -7,7 +7,6 @@ import java.util.List;
 
 import lexical.Lexeme;
 import lexical.LexicalAnalyzer;
-
 import lexical.SymbolTable;
 
 public class Main {
@@ -27,17 +26,17 @@ public class Main {
 		try {
 			LexicalAnalyzer lexicalAnalyzer = new LexicalAnalyzer(args[0]);
 			
-			System.out.println("Tokens:");
+			System.out.println("\nTokens:");
 			List<Lexeme> lexemes = lexicalAnalyzer.getListOfLexemes();
 			for(Lexeme lexeme: lexemes) {
 				System.out.println("\t" + lexeme);
 			}
 			
-			lexicalAnalyzer.close();
 		} catch (IOException e) {
 			System.err.println("Não foi possível executar a análise léxica: \n\t" + e.getMessage());
 		}
 		
+
 	}
 
 }
