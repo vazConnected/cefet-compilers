@@ -3,27 +3,16 @@ package lexical;
 import lexical.token.TokenPosition;
 import lexical.token.TokenType;
 
-//public class Lexeme {
-//	public TokenType tokenType;
-//	public String tokenValue;
-//	public TokenPosition position;
-	
 public record Lexeme(TokenType tokenType, String tokenValue, TokenPosition position) {
 	@Override
 	public String toString() {
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append("Token: ");
-		stringBuilder.append(this.tokenType);
-		
-		stringBuilder.append(", value: ");
-		stringBuilder.append(this.tokenValue);
-		
-		stringBuilder.append("position: ");
-		stringBuilder.append(position);
-		
-		return stringBuilder.toString();
+	    return "{" +
+	           "tokenType=" + tokenType +
+	           ", tokenValue='" + tokenValue + '\'' +
+	           ", position=" + position.toString() +
+	           '}';
 	}
-	
+
 	@Override
 	public boolean equals(Object object) {
 		if ( !(object instanceof Lexeme) ) return false;
@@ -41,6 +30,4 @@ public record Lexeme(TokenType tokenType, String tokenValue, TokenPosition posit
 	    result = prime * result + ((position == null) ? 0 : position.hashCode());
 	    return result;
 	}
-
-	
 }
