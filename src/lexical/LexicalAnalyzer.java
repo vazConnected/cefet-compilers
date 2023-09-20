@@ -79,6 +79,7 @@ public class LexicalAnalyzer {
 						tokenValueBuffer += (char) currentChar;
 						state = 15;
 					} else if (currentChar == '/') {
+						tokenValueBuffer += (char) currentChar;
 						state = 2;
 					} else if (Character.isLetter(currentChar)) {
 						tokenValueBuffer += (char) currentChar;
@@ -104,6 +105,7 @@ public class LexicalAnalyzer {
 						state = 5;
 					} else {
 						this.fileManager.unget(currentChar);
+						lexeme = new Lexeme(TokenType.DIV , tokenValueBuffer, tokenPosition);
 						state = 15;
 					}
 					break;
@@ -231,7 +233,7 @@ public class LexicalAnalyzer {
 					}
 					break;
 	
-				case 14:
+				case 13:
 					if (currentChar == '&') {
 						tokenValueBuffer += (char) currentChar;
 						state = 15;
@@ -245,7 +247,7 @@ public class LexicalAnalyzer {
 			}
 		}
 
-		if (state == 15) {
+		if (state == 15 || state == 14) {
 			TokenType tokenType = SymbolTable.get(tokenValueBuffer);
 			if (tokenType != null) {
 				lexeme = new Lexeme(tokenType, tokenValueBuffer, tokenPosition);
