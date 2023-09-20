@@ -22,14 +22,14 @@ public class SymbolTable {
 	
 	public static String toText() {
 		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append("Symble Table:\n");
+		stringBuilder.append("Symbol Table:\n");
 		
 		Set<String> keys =  symbolTable.keySet();
 		Iterator<String> keysIterator = keys.iterator();
 		while( keysIterator.hasNext() ) {
 			String currentKey = keysIterator.next();
 			
-			stringBuilder.append("\t" + currentKey + ":\t");
+			stringBuilder.append("\t" + currentKey + ":\t\t\t");
 			stringBuilder.append(symbolTable.get(currentKey) + "\n");
 		}
 			
@@ -52,6 +52,10 @@ public class SymbolTable {
 	
 	public static boolean contains(TokenType tokenType) {
 		return SymbolTable.symbolTable.containsValue(tokenType);
+	}
+	
+	public static void addToSymbolTable(String symbol, TokenType tokenType){
+			symbolTable.put(symbol, tokenType);
 	}
 	
 	private static Hashtable<String, TokenType> getTableElements() {

@@ -3,16 +3,18 @@ package compiler;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.Hashtable;
 import java.util.List;
 
 import lexical.Lexeme;
 import lexical.LexicalAnalyzer;
 import lexical.SymbolTable;
+import lexical.token.TokenType;
 
 public class Main {
 
 	public static void main(String[] args) throws FileNotFoundException {
-		System.out.print(SymbolTable.toText());
+		//System.out.print(SymbolTable.toText());
 		
 		if (args.length == 0) {
 			throw new IllegalArgumentException("Nenhum arquivo encontrado. É necessário informar o arquivo desejado para a execução do software");
@@ -30,7 +32,10 @@ public class Main {
 			List<Lexeme> lexemes = lexicalAnalyzer.getListOfLexemes();
 			for(Lexeme lexeme: lexemes) {
 				System.out.println("\t" + lexeme);
+				SymbolTable.addToSymbolTable(lexeme.tokenValue(), lexeme.tokenType()); 
 			}
+			
+			System.out.print("\n" + SymbolTable.toText());
 			
 		} catch (IOException e) {
 			System.err.println("Não foi possível executar a análise léxica: \n\t" + e.getMessage());
