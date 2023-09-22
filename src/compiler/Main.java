@@ -14,7 +14,6 @@ import lexical.token.TokenType;
 public class Main {
 
 	public static void main(String[] args) throws FileNotFoundException {
-		//System.out.print(SymbolTable.toText());
 		
 		if (args.length == 0) {
 			throw new IllegalArgumentException("Nenhum arquivo encontrado. É necessário informar o arquivo desejado para a execução do software");
@@ -32,7 +31,7 @@ public class Main {
 			List<Lexeme> lexemes = lexicalAnalyzer.getListOfLexemes();
 			for(Lexeme lexeme: lexemes) {
 				System.out.println("\t" + lexeme);
-				SymbolTable.addToSymbolTable(lexeme.tokenValue(), lexeme.tokenType()); 
+				//SymbolTable.addToSymbolTable(lexeme.tokenValue(), lexeme.tokenType()); 
 			}
 			
 			System.out.print("\n" + SymbolTable.toText());

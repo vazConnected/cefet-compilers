@@ -75,7 +75,7 @@ public class LexicalAnalyzer {
 					} else if (currentChar == '&') {
 						tokenValueBuffer += (char) currentChar;
 						state = 13;
-					} else if (currentChar == '+' || currentChar == '-' || currentChar == '*' || currentChar == ';' || currentChar == '(' || currentChar == ')' || currentChar == '{' || currentChar == '}') {
+					} else if (currentChar == '+' || currentChar == '-' || currentChar == '*' || currentChar == ',' ||currentChar == ';' || currentChar == '(' || currentChar == ')' || currentChar == '{' || currentChar == '}') {
 						tokenValueBuffer += (char) currentChar;
 						state = 15;
 					} else if (currentChar == '/') {
@@ -92,6 +92,7 @@ public class LexicalAnalyzer {
 					} else {
 						tokenValueBuffer += (char) currentChar;
 						lexeme = new Lexeme(TokenType.INVALID_TOKEN, tokenValueBuffer, tokenPosition);
+						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INVALID_TOKEN);
 						state = 15;
 					}
 					break;
@@ -106,6 +107,7 @@ public class LexicalAnalyzer {
 					} else {
 						this.fileManager.unget(currentChar);
 						lexeme = new Lexeme(TokenType.DIV , tokenValueBuffer, tokenPosition);
+						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.DIV);
 						state = 15;
 					}
 					break;
@@ -120,6 +122,7 @@ public class LexicalAnalyzer {
 						//state = 3;
 					} else if (currentChar == -1) {
 						lexeme = new Lexeme(TokenType.UNEXPECTED_EOF, tokenValueBuffer, tokenPosition);
+						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.UNEXPECTED_EOF);
 						state = 15;
 					} else {
 						tokenValueBuffer += (char) currentChar;
@@ -133,6 +136,7 @@ public class LexicalAnalyzer {
 						state = 1;
 					} else if (currentChar == -1) {
 						lexeme = new Lexeme(TokenType.UNEXPECTED_EOF, tokenValueBuffer, tokenPosition);
+						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.UNEXPECTED_EOF);
 						state = 15;
 					} else if (currentChar == '\n') {
 						this.newLine();
@@ -154,12 +158,15 @@ public class LexicalAnalyzer {
 				case 6:
 					if (currentChar == '"') {
 						lexeme = new Lexeme(TokenType.LITERAL, tokenValueBuffer, tokenPosition);
+						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.LITERAL);
 						state = 14;
 					} else if (currentChar == -1) {
 						lexeme = new Lexeme(TokenType.UNEXPECTED_EOF, tokenValueBuffer, tokenPosition);
+						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.UNEXPECTED_EOF);
 						state = 15;
 					} else if (currentChar == '\n') {
 						lexeme = new Lexeme(TokenType.INVALID_TOKEN, tokenValueBuffer, tokenPosition);
+						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INVALID_TOKEN);
 						this.newLine();
 						state = 15;
 					} else if (currentChar > 31 && currentChar < 127) {
@@ -178,6 +185,7 @@ public class LexicalAnalyzer {
 					} else {
 						this.fileManager.unget(currentChar);
 						lexeme = new Lexeme(TokenType.INT_CONST, tokenValueBuffer, tokenPosition);
+						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INT_CONST);
 						state = 14;
 					}
 					break;
@@ -188,6 +196,7 @@ public class LexicalAnalyzer {
 						state = 9;
 					} else {
 						lexeme = new Lexeme(TokenType.INVALID_TOKEN, "", tokenPosition);
+						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INVALID_TOKEN);
 						state = 14;
 					}
 					break;
@@ -199,6 +208,7 @@ public class LexicalAnalyzer {
 					} else {
 						this.fileManager.unget(currentChar);
 						lexeme = new Lexeme(TokenType.REAL_CONST, "", tokenPosition);
+						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.REAL_CONST);
 						state = 14;
 					}
 					break;
@@ -229,6 +239,7 @@ public class LexicalAnalyzer {
 						state = 15;
 					} else {
 						lexeme = new Lexeme(TokenType.INVALID_TOKEN, "", tokenPosition);
+						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INVALID_TOKEN);
 						state = 14;
 					}
 					break;
@@ -239,6 +250,7 @@ public class LexicalAnalyzer {
 						state = 15;
 					} else {
 						lexeme = new Lexeme(TokenType.INVALID_TOKEN, "", tokenPosition);
+						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INVALID_TOKEN);
 						state = 14;
 					}
 					break;
@@ -248,11 +260,13 @@ public class LexicalAnalyzer {
 		}
 
 		if (state == 15 || state == 14) {
-			TokenType tokenType = SymbolTable.get(tokenValueBuffer);
-			if (tokenType != null) {
+			if(!SymbolTable.getSymbolTable().containsKey(tokenValueBuffer)) {
+				TokenType tokenType = SymbolTable.getTokenType(tokenValueBuffer);
 				lexeme = new Lexeme(tokenType, tokenValueBuffer, tokenPosition);
+				SymbolTable.addToSymbolTable(tokenValueBuffer, tokenType);
 			} else {
-				lexeme = new Lexeme(TokenType.ID, tokenValueBuffer, tokenPosition);
+				TokenType tokenType = SymbolTable.getSymbolTable().get(tokenValueBuffer);
+				lexeme = new Lexeme(tokenType, tokenValueBuffer, tokenPosition);
 			}
 		}
 		
