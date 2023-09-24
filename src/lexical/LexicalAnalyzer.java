@@ -53,7 +53,6 @@ public class LexicalAnalyzer {
 
 		TokenPosition tokenPosition = new TokenPosition(lineCounter, chracterInLineCounter);
 		String tokenValueBuffer = "";
-
 		int state = 1;
 		while (state != 14 && state != 15) {
 			char currentChar = (char) this.fileManager.read();
@@ -75,9 +74,15 @@ public class LexicalAnalyzer {
 					} else if (currentChar == '&') {
 						tokenValueBuffer += (char) currentChar;
 						state = 13;
-					} else if (currentChar == '+' || currentChar == '-' || currentChar == '*' || currentChar == ',' ||currentChar == ';' || currentChar == '(' || currentChar == ')' || currentChar == '{' || currentChar == '}') {
+					} else if (currentChar == '+' || currentChar == '-' || currentChar == '*' || currentChar == ',' ||currentChar == ';' || currentChar == ')' || currentChar == '{' || currentChar == '}') {
 						tokenValueBuffer += (char) currentChar;
 						state = 15;
+					} else if(currentChar == '('){
+						tokenValueBuffer += (char) currentChar;
+						lexeme = new Lexeme(TokenType.OPEN_PARENTHESIS, tokenValueBuffer, tokenPosition);
+						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.OPEN_PARENTHESIS);
+						tokenValueBuffer = "";
+						state = 17;
 					} else if (currentChar == '/') {
 						tokenValueBuffer += (char) currentChar;
 						state = 2;
@@ -92,7 +97,7 @@ public class LexicalAnalyzer {
 					} else {
 						tokenValueBuffer += (char) currentChar;
 						lexeme = new Lexeme(TokenType.INVALID_TOKEN, tokenValueBuffer, tokenPosition);
-						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INVALID_TOKEN);
+						//SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INVALID_TOKEN);
 						state = 15;
 					}
 					break;
@@ -113,7 +118,11 @@ public class LexicalAnalyzer {
 					break;
 	
 				case 3:
-					if (currentChar == '*') {
+					if (currentChar == '/') {
+						tokenValueBuffer += (char) currentChar;
+						tokenValueBuffer = "";
+						state = 1;
+						} else if (currentChar == '*') {
 						tokenValueBuffer += (char) currentChar;
 						state = 4;
 					} else if (currentChar == '\n') {
@@ -126,13 +135,14 @@ public class LexicalAnalyzer {
 						state = 15;
 					} else {
 						tokenValueBuffer += (char) currentChar;
-						//state = 3;
+						state = 3;
 					}
 					break;
 	
 				case 4:
 					if (currentChar == '/') {
 						tokenValueBuffer += (char) currentChar;
+						tokenValueBuffer = "";
 						state = 1;
 					} else if (currentChar == -1) {
 						lexeme = new Lexeme(TokenType.UNEXPECTED_EOF, tokenValueBuffer, tokenPosition);
@@ -142,6 +152,7 @@ public class LexicalAnalyzer {
 						this.newLine();
 						state = 3;
 					} else {
+						tokenValueBuffer += (char) currentChar;
 						state = 3;
 					}
 					break;
@@ -149,6 +160,7 @@ public class LexicalAnalyzer {
 				case 5:
 					if (currentChar == '\n') {
 						this.newLine();
+						tokenValueBuffer = "";
 						state = 1;
 					} else {
 						state = 5;
@@ -168,7 +180,7 @@ public class LexicalAnalyzer {
 						lexeme = new Lexeme(TokenType.INVALID_TOKEN, tokenValueBuffer, tokenPosition);
 						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INVALID_TOKEN);
 						this.newLine();
-						state = 15;
+						state = 14;
 					} else if (currentChar > 31 && currentChar < 127) {
 						tokenValueBuffer += (char) currentChar;
 						state = 6;
@@ -182,6 +194,9 @@ public class LexicalAnalyzer {
 					} else if (Character.isDigit(currentChar)) {
 						tokenValueBuffer += (char) currentChar;
 						state = 7;
+					} else if(Character.isLetter(currentChar)) {
+						tokenValueBuffer += (char) currentChar;
+						state = 16;
 					} else {
 						this.fileManager.unget(currentChar);
 						lexeme = new Lexeme(TokenType.INT_CONST, tokenValueBuffer, tokenPosition);
@@ -196,7 +211,7 @@ public class LexicalAnalyzer {
 						state = 9;
 					} else {
 						lexeme = new Lexeme(TokenType.INVALID_TOKEN, "", tokenPosition);
-						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INVALID_TOKEN);
+						//SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INVALID_TOKEN);
 						state = 14;
 					}
 					break;
@@ -239,7 +254,7 @@ public class LexicalAnalyzer {
 						state = 15;
 					} else {
 						lexeme = new Lexeme(TokenType.INVALID_TOKEN, "", tokenPosition);
-						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INVALID_TOKEN);
+						//SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INVALID_TOKEN);
 						state = 14;
 					}
 					break;
@@ -250,10 +265,44 @@ public class LexicalAnalyzer {
 						state = 15;
 					} else {
 						lexeme = new Lexeme(TokenType.INVALID_TOKEN, "", tokenPosition);
-						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INVALID_TOKEN);
+						//SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INVALID_TOKEN);
 						state = 14;
 					}
 					break;
+				case 16:
+					if(Character.isLetter(currentChar)) {
+						tokenValueBuffer += (char) currentChar;
+						state = 16;
+					} else  {
+						this.fileManager.unget(currentChar);
+						lexeme = new Lexeme(TokenType.INVALID_TOKEN, "", tokenPosition);
+						//SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INVALID_TOKEN);
+						state = 14;
+					}
+					break;
+				case 17:
+					if(currentChar == '"') {
+						state = 18;
+					} else {
+						this.fileManager.unget(currentChar);
+						state = 15;
+					}
+					break;
+				case 18:
+					if(currentChar == '"'){
+						
+						state = 15;
+					} else if(currentChar == '\n') {
+						this.fileManager.unget(currentChar);
+						lexeme = new Lexeme(TokenType.INVALID_TOKEN, tokenValueBuffer, tokenPosition);
+						SymbolTable.addToSymbolTable(tokenValueBuffer, TokenType.INVALID_TOKEN);
+						this.newLine();
+						state = 14;
+					} else if(currentChar > 31 && currentChar < 127 ) {
+						state = 18;
+					} 
+					break;
+					
 				default:
 					throw new LexicalException("Unreachable");
 			}
