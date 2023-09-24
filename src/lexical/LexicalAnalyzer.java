@@ -299,6 +299,7 @@ public class LexicalAnalyzer {
 						this.newLine();
 						state = 14;
 					} else if(currentChar > 31 && currentChar < 127 ) {
+						tokenValueBuffer += (char) currentChar;
 						state = 18;
 					} 
 					break;

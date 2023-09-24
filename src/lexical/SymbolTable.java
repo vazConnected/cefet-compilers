@@ -62,6 +62,7 @@ public class SymbolTable {
 	}
 	
 	public static void addToSymbolTable(String symbol, TokenType tokenType){
+		if (symbol.isEmpty() || tokenType == null) return;
 		//System.out.println("add symbol: " + symbol + "    value: " + tokenType);
 		symbolTable.put(symbol, tokenType);
 	}
