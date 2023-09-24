@@ -2,13 +2,14 @@ package lexical;
 
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
 import lexical.token.TokenType;
 
 public class SymbolTable {
-	private static final Hashtable<String, TokenType> symbolTable = new Hashtable<String, TokenType>();
+	private static final Map<String, TokenType> symbolTable = new LinkedHashMap<String, TokenType>();
 	private static final Hashtable<String, TokenType> languageElements = SymbolTable.getLanguageElements();
 	
 	private SymbolTable() {}
@@ -26,7 +27,7 @@ public class SymbolTable {
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append("Symbol Table:\n");
 		
-		Set<String> keys =  symbolTable.keySet();
+		Set<String> keys =  SymbolTable.symbolTable.keySet();
 		Iterator<String> keysIterator = keys.iterator();
 		while( keysIterator.hasNext() ) {
 			String currentKey = keysIterator.next();
@@ -66,53 +67,8 @@ public class SymbolTable {
 	}
 	
 	public static Hashtable<String, TokenType> getSymbolTable() {
-		Hashtable<String, TokenType> st = symbolTable;
-		return st;
-	}
-	
-	private static Hashtable<String, TokenType> getTableElements() {
-		Hashtable<String, TokenType> st = new Hashtable<String, TokenType>();
-		
-		/*st.put(";", TokenType.SEMI_COLON);
-      	st.put(",", TokenType.COMMA);
-        st.put("(", TokenType.OPEN_PARENTHESIS);
-      	st.put(")", TokenType.CLOSE_PARENTHESIS);	
-        st.put("{", TokenType.OPEN_CURLY_BRACKET);
-      	st.put("}", TokenType.CLOSE_CURLY_BRACKET);	
-      	st.put("[", TokenType.OPEN_BRACKET);
-      	st.put("]", TokenType.CLOSE_BRACKET);	
-        st.put("\"", TokenType.QUOTATION);
-				
-        // OPERATORS
-        st.put(">", TokenType.GREATER_THAN);
-      	st.put(">=", TokenType.GREATER_EQUAL);
-      	st.put("<", TokenType.LOWER_THAN);
-      	st.put("<=", TokenType.LOWER_EQUAL);
-        st.put("!=", TokenType.NOT_EQUAL);
-        st.put("==", TokenType.EQUAL);
-        st.put("!", TokenType.NOT);
-		st.put("+", TokenType.ADD);
-		st.put("-", TokenType.SUB);
-        st.put("||", TokenType.OR);
-        st.put("*", TokenType.MUL);
-		st.put("/", TokenType.DIV);
-        st.put("&&", TokenType.AND);
-		st.put("=", TokenType.ASSIGN);
-        st.put("==", TokenType.COMPARE);
-
-        // KEYWORDS
-		st.put("class", TokenType.CLASS);
-		st.put("INT", TokenType.INT);
-        st.put("string", TokenType.STRING);
-        st.put("float", TokenType.FLOAT);
-      	st.put("if", TokenType.IF);
-      	st.put("else", TokenType.ELSE);
-      	st.put("do", TokenType.DO);
-      	st.put("while", TokenType.WHILE);
-      	st.put("read", TokenType.READ);
-		st.put("write", TokenType.WRITE);*/
-		
-		return st;
+	    Hashtable<String, TokenType> st = new Hashtable<>(symbolTable);
+	    return st;
 	}
 	
 	public static Hashtable<String, TokenType> getLanguageElements() {
