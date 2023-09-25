@@ -4,12 +4,12 @@
 O objetivo deste projeto é construir um compilador completo para uma dada linguagem de programação.
 
 ## Descrição Técnica
-Esse projeto foi desenvolvido em [Java](https://download.oracle.com/java/20/latest/jdk-20_windows-x64_bin.exe) e foi segmentado em três etapas:
+Esse projeto foi desenvolvido em [Java](https://download.oracle.com/java/20/latest/jdk-20_windows-x64_bin.exe) e foi segmentado em quatro etapas:
 
-1. Analisador Léxico e Tabela de Símbolos;
-2. Analisador Sintático;
-3. Analisador Semântico;
-4. Gerador de Código;
+1. Análise Léxica e Tabela de Símbolos;
+2. Análise Sintática
+3. Análise Semântica
+4. Geração do Código
 
 Para cada etapa haverá um release específico contendo as descrições de uso e execução.
 
@@ -55,7 +55,7 @@ Para cada etapa haverá um release específico contendo as descrições de uso e
 - addop ::= "+" | "-" | "||"
 - mulop ::= "*" | "/" | "&&"
 
-### Padrão de formação dos tokens
+## Padrão de formação dos tokens
 - constant → integer_const | literal | real_const
 - integer_const → nonzero digit* | 0
 - real_const → interger_const "." digit+
@@ -66,11 +66,23 @@ Para cada etapa haverá um release específico contendo as descrições de uso e
 - nonzero → [1-9]
 - caractere → um dos 256 caracteres do conjunto ASCII, exceto as aspas e quebra de linha
 
-## Autômatos e Máquinas de Estados
-TODO: colocar imagens aqui
+## Etapas do Compilador
+
+### 1. Análise Léxica e Tabela de Símbolos;
+WIP
+
+### 2. Análise Sintática
+TODO
+
+### 3. Análise Semântica
+TODO
+
+### 4. Geração do Código
+TODO
+
 
 ## Releases
-- Analisador Léxico e Tabela de Símbolos: TBA
+- Analisador Léxico e Tabela de Símbolos: WIP
 - Analisador Sintático: TBA
 - Analisador Semântico: TBA
 - Gerador de Código: TBA
