@@ -1,0 +1,11 @@
+class testeExtra2 
+  int A, B;
+  float total;
+  {  
+     write("Digite o valor de A:"); 
+     read (A);
+     write("Digite o valor de B:"); 
+     read (B); 
+     float = (A + B) * (B / A)
+     write(A); 
+  }
