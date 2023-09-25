@@ -1,10 +1,7 @@
 package lexical;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-
 import lexical.token.TokenPosition;
 import lexical.token.TokenType;
 
@@ -21,11 +18,11 @@ public class LexicalAnalyzer {
 		this.chracterInLineCounter = 0;
 	}
 
-	private void resetLexicalAnalyzer() throws IOException {
-		this.fileManager.reset();
-		this.lineCounter = 1;
-		this.chracterInLineCounter = 0;
-	}
+//	private void resetLexicalAnalyzer() throws IOException {
+//		this.fileManager.reset();
+//		this.lineCounter = 1;
+//		this.chracterInLineCounter = 0;
+//	}
 
 	private void newLine() {
 		this.lineCounter++;
@@ -62,7 +59,7 @@ public class LexicalAnalyzer {
 				case INITIAL:
 					if (currentChar == ' ' || currentChar == '\t' || currentChar == '\r');
 
-					else if (currentChar == '\n') { // PULA LINHA
+					else if (currentChar == '\n') { // QUEBRA DE LINHA
 						this.newLine();
 					}
 
@@ -98,19 +95,25 @@ public class LexicalAnalyzer {
 
 					else { // PADRAO NAO IDENTIFICADO
 						tokenValueBuffer += String.valueOf(currentChar);
-						currentState = State.ERROR;
+						throw new LexicalException("Padrao nao reconhecido pela linguagem. Posicao: " + currentTokenPosition + ", Valor: '" + tokenValueBuffer + "'\n");
 					}
 					break;
 
 				case INTEGER_CONST:
 					if (Character.isDigit(currentChar)) {
 						tokenValueBuffer += String.valueOf(currentChar);
-					} else if (currentChar == '.') {
+					} 
+					
+					else if (currentChar == '.') {
 						tokenValueBuffer += String.valueOf(currentChar);
 						currentState = State.REAL_COST;
-					} else if (Character.isLetter(currentChar)){
+					} 
+					
+					else if (Character.isLetter(currentChar)){
 						throw new LexicalException("Constantes inteiras nao podem ter letras. Posicao: " + currentTokenPosition + ", Valor: '" + tokenValueBuffer + "'\n");
-					} else {
+					} 
+					
+					else {
 						this.unget(currentChar);
 						return new Lexeme(TokenType.INT_CONST, tokenValueBuffer, this.getTokenPosition());
 					}
@@ -119,9 +122,13 @@ public class LexicalAnalyzer {
 				case REAL_COST:
 					if (Character.isDigit(currentChar)) {
 						tokenValueBuffer += String.valueOf(currentChar);
-					} else if (Character.isLetter(currentChar)){
+					} 
+					
+					else if (Character.isLetter(currentChar)){
 						throw new LexicalException("Constantes reais nao podem ter letras. Posicao: " + currentTokenPosition + ", Valor: '" + tokenValueBuffer + "'\n");
-					} else {
+					} 
+					
+					else {
 						this.unget(currentChar);
 						return new Lexeme(TokenType.REAL_CONST, tokenValueBuffer, this.getTokenPosition());
 					}
@@ -131,15 +138,20 @@ public class LexicalAnalyzer {
 					tokenValueBuffer += String.valueOf(currentChar);
 					if (currentChar == '"') {
 						return new Lexeme(TokenType.LITERAL, tokenValueBuffer, this.getTokenPosition());
-					} else if (currentChar == '\n') {
-						currentState = State.ERROR;
+					} 
+					
+					else if (currentChar == '\n') {
+						tokenValueBuffer = tokenValueBuffer.substring(0, tokenValueBuffer.length() - 2); // Remover quebra de linha
+						throw new LexicalException("Quebra de linha inesperada na formacao de um literal. Posicao: " + currentTokenPosition + ", Valor: '" + tokenValueBuffer + "'\n");
 					}
 					break;
 
 				case IDENTIFIER:
 					if (Character.isDigit(currentChar) || Character.isLetter(currentChar) || currentChar == '_') {
 						tokenValueBuffer += String.valueOf(currentChar);
-					} else {
+					} 
+					
+					else {
 						this.unget(currentChar);
 						return new Lexeme(this.languageElements.getOrDefault(tokenValueBuffer, TokenType.ID),
 								tokenValueBuffer, this.getTokenPosition());
@@ -150,10 +162,14 @@ public class LexicalAnalyzer {
 					if (currentChar == '/') {
 						tokenValueBuffer = "";
 						currentState = State.ONE_LINE_COMMENT;
-					} else if (currentChar == '*') {
+					} 
+					
+					else if (currentChar == '*') {
 						tokenValueBuffer = "";
 						currentState = State.MULTIPLE_LINE_COMMENT;
-					} else {
+					} 
+					
+					else {
 						this.unget(currentChar);
 						return new Lexeme(TokenType.DIV, "/", this.getTokenPosition());
 					}
@@ -169,7 +185,9 @@ public class LexicalAnalyzer {
 				case MULTIPLE_LINE_COMMENT:
 					if (currentCharAsInt == -1 ) {
 						throw new LexicalException("Comentario de multiplas linhas nao finalizado. Posicao: " + currentTokenPosition + ", Valor: '" + tokenValueBuffer + "'\n");
-					} else if (currentChar == '*') {
+					} 
+					
+					else if (currentChar == '*') {
 						char nextChar = (char) fileManager.read();
 
 						if (nextChar == '/') {
@@ -177,13 +195,12 @@ public class LexicalAnalyzer {
 						} else {
 							this.unget(nextChar);
 						}
-					} else if (currentChar == '\n') {
+					} 
+					
+					else if (currentChar == '\n') {
 						this.newLine();
 					}
 					break;
-
-				case ERROR:
-					throw new LexicalException("Erro: Padrao nao reconhecido. Posicao: " + currentTokenPosition + ", Valor: '" + tokenValueBuffer + "'\n");
 
 				default:
 					throw new LexicalException("Padrao nao reconhecido. Posicao: " + currentTokenPosition + ", Valor: '" + tokenValueBuffer + "'\n");
@@ -239,6 +256,6 @@ public class LexicalAnalyzer {
 	}
 
 	private enum State {
-		INITIAL, INTEGER_CONST, REAL_COST, LITERAL, IDENTIFIER, SLASH, ONE_LINE_COMMENT, MULTIPLE_LINE_COMMENT, ERROR
+		INITIAL, INTEGER_CONST, REAL_COST, LITERAL, IDENTIFIER, SLASH, ONE_LINE_COMMENT, MULTIPLE_LINE_COMMENT;
 	}
 }
