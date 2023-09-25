@@ -6,11 +6,9 @@ import lexical.token.TokenType;
 public record Lexeme(TokenType tokenType, String tokenValue, TokenPosition position) {
 	@Override
 	public String toString() {
-	    return "{" +
-	           "token=" + tokenType +
-	           ", valor='" + tokenValue + '\'' +
-	           ", posicao=" + position.toString() +
-	           '}';
+		return String.format(
+				"%-30s\t%-20s\t%-10s\t%-6s", tokenValue(), tokenType(), position().line(), position().characterPositionInLine()
+				);
 	}
 
 	@Override

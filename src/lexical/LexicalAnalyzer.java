@@ -2,6 +2,9 @@ package lexical;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+
 import lexical.token.TokenPosition;
 import lexical.token.TokenType;
 
@@ -57,11 +60,41 @@ public class LexicalAnalyzer {
 			chracterInLineCounter++;
 			switch (currentState) {
 				case INITIAL:
-					if (currentChar == ' ' || currentChar == '\t' || currentChar == '\r');
+					if (currentCharAsInt == -1) { // FIM DE ARQUIVO
+						return null;
+					}
+					
+					else if (currentChar == ' ' || currentChar == '\t' || currentChar == '\r');
 
 					else if (currentChar == '\n') { // QUEBRA DE LINHA
 						this.newLine();
 					}
+					
+					else if (currentChar == '=' || currentChar == '>' || currentChar == '<' || currentChar == '!') { // COMPARACOES COM '='
+						tokenValueBuffer += String.valueOf(currentChar);
+						char nextChar = (char) fileManager.read();
+
+						if (nextChar == '=') {
+							tokenValueBuffer += String.valueOf(nextChar);
+							return new Lexeme(this.languageElements.get(tokenValueBuffer), tokenValueBuffer, currentTokenPosition);
+						} else {
+							this.unget(nextChar);
+							return new Lexeme(TokenType.ASSIGN, tokenValueBuffer, currentTokenPosition);
+						}
+					}
+					
+					else if (currentChar == '&' || currentChar == '|') { // COMPARACOES COM '='
+						tokenValueBuffer += String.valueOf(currentChar);
+						char nextChar = (char) fileManager.read();
+
+						if (currentChar == '&' || currentChar == '|') {
+							tokenValueBuffer += String.valueOf(nextChar);
+							return new Lexeme(this.languageElements.get(tokenValueBuffer), tokenValueBuffer, currentTokenPosition);
+						} else {
+							this.unget(nextChar);
+							return new Lexeme(TokenType.ASSIGN, tokenValueBuffer, currentTokenPosition);
+						}
+					}					
 
 					else if (Character.isDigit(currentChar)) { // NUMERO
 						tokenValueBuffer += String.valueOf(currentChar);
@@ -87,10 +120,6 @@ public class LexicalAnalyzer {
 					else if ( this.languageElements.containsKey( String.valueOf(currentChar) )) { // ELEMENTO DA LINGUAGEM
 						tokenValueBuffer += String.valueOf(currentChar);
 						return new Lexeme(this.languageElements.get(String.valueOf(currentChar)), tokenValueBuffer, currentTokenPosition);
-					}
-
-					else if (currentChar == -1) { // FIM DE ARQUIVO
-						return null;
 					}
 
 					else { // PADRAO NAO IDENTIFICADO
@@ -153,8 +182,8 @@ public class LexicalAnalyzer {
 					
 					else {
 						this.unget(currentChar);
-						return new Lexeme(this.languageElements.getOrDefault(tokenValueBuffer, TokenType.ID),
-								tokenValueBuffer, this.getTokenPosition());
+						TokenType currentTokenType = this.languageElements.getOrDefault(tokenValueBuffer, TokenType.ID);						
+						return new Lexeme(currentTokenType, tokenValueBuffer, this.getTokenPosition());
 					}
 					break;
 
@@ -211,7 +240,25 @@ public class LexicalAnalyzer {
 	private TokenPosition getTokenPosition() {
 		return new TokenPosition(this.lineCounter, this.chracterInLineCounter);
 	}
-
+	
+	public void populateSymbolTable(List<Lexeme> listOfLexemes) {		
+		for (int i = 0; i < listOfLexemes.size(); i++) {
+			Lexeme currentLexeme = listOfLexemes.get(i);
+			TokenType currentTokenType = currentLexeme.tokenType();
+			
+			if (currentTokenType == TokenType.LITERAL && i > 0) {
+				Lexeme previousLexeme = listOfLexemes.get(i-1);
+				if (previousLexeme.tokenType() != TokenType.OPEN_PARENTHESIS) {
+					SymbolTable.addToSymbolTable(currentLexeme.tokenValue(),currentTokenType);
+				}
+				
+				
+			} else {
+				SymbolTable.addToSymbolTable(currentLexeme.tokenValue(),currentTokenType);
+			}
+		}
+	}
+	
 	private void setLanguageElements() {
 		this.languageElements = new HashMap<String, TokenType>();
 
@@ -244,7 +291,7 @@ public class LexicalAnalyzer {
 
 		// KEYWORDS
 		this.languageElements.put("class", TokenType.CLASS);
-		this.languageElements.put("INT", TokenType.INT);
+		this.languageElements.put("int", TokenType.INT);
 		this.languageElements.put("string", TokenType.STRING);
 		this.languageElements.put("float", TokenType.FLOAT);
 		this.languageElements.put("if", TokenType.IF);
