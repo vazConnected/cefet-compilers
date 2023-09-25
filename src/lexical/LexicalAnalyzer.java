@@ -47,13 +47,13 @@ public class LexicalAnalyzer {
 		State currentState = State.INITIAL;
 		while (true) {
 			int currentCharAsInt = this.fileManager.read();
-			if (currentCharAsInt == -1) {
-				if (currentState != State.INITIAL) {
-					throw new LexicalException("Fim de arquivo inesperado. Posicao: " + currentTokenPosition + ", Valor: '" + tokenValueBuffer + "'\n");
-				} else {
-					return null;
-				}
-			}
+//			if (currentCharAsInt == -1) {
+//				if (currentState != State.INITIAL) {
+//					throw new LexicalException("Fim de arquivo inesperado. Posicao: " + currentTokenPosition + ", Valor: '" + tokenValueBuffer + "'\n");
+//				} else {
+//					return null;
+//				}
+//			}
 			
 			char currentChar = (char) currentCharAsInt;
 
@@ -108,6 +108,8 @@ public class LexicalAnalyzer {
 					} else if (currentChar == '.') {
 						tokenValueBuffer += String.valueOf(currentChar);
 						currentState = State.REAL_COST;
+					} else if (Character.isLetter(currentChar)){
+						throw new LexicalException("Constantes inteiras nao podem ter letras. Posicao: " + currentTokenPosition + ", Valor: '" + tokenValueBuffer + "'\n");
 					} else {
 						this.unget(currentChar);
 						return new Lexeme(TokenType.INT_CONST, tokenValueBuffer, this.getTokenPosition());
@@ -117,6 +119,8 @@ public class LexicalAnalyzer {
 				case REAL_COST:
 					if (Character.isDigit(currentChar)) {
 						tokenValueBuffer += String.valueOf(currentChar);
+					} else if (Character.isLetter(currentChar)){
+						throw new LexicalException("Constantes reais nao podem ter letras. Posicao: " + currentTokenPosition + ", Valor: '" + tokenValueBuffer + "'\n");
 					} else {
 						this.unget(currentChar);
 						return new Lexeme(TokenType.REAL_CONST, tokenValueBuffer, this.getTokenPosition());
@@ -163,7 +167,9 @@ public class LexicalAnalyzer {
 					break;
 
 				case MULTIPLE_LINE_COMMENT:
-					if (currentChar == '*') {
+					if (currentCharAsInt == -1 ) {
+						throw new LexicalException("Comentario de multiplas linhas nao finalizado. Posicao: " + currentTokenPosition + ", Valor: '" + tokenValueBuffer + "'\n");
+					} else if (currentChar == '*') {
 						char nextChar = (char) fileManager.read();
 
 						if (nextChar == '/') {
@@ -171,6 +177,8 @@ public class LexicalAnalyzer {
 						} else {
 							this.unget(nextChar);
 						}
+					} else if (currentChar == '\n') {
+						this.newLine();
 					}
 					break;
 

@@ -4,8 +4,8 @@ public record TokenPosition (Integer line, Integer characterPositionInLine) {
 	@Override
 	public String toString() {
 	    return "{" +
-	           "line=" + line +
-	           ", character=" + characterPositionInLine +
+	           "linha=" + line +
+	           ", caractere=" + characterPositionInLine +
 	           '}';
 	}
 }

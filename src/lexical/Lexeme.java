@@ -7,9 +7,9 @@ public record Lexeme(TokenType tokenType, String tokenValue, TokenPosition posit
 	@Override
 	public String toString() {
 	    return "{" +
-	           "tokenType=" + tokenType +
-	           ", tokenValue='" + tokenValue + '\'' +
-	           ", position=" + position.toString() +
+	           "token=" + tokenType +
+	           ", valor='" + tokenValue + '\'' +
+	           ", posicao=" + position.toString() +
 	           '}';
 	}
 

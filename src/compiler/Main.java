@@ -32,7 +32,7 @@ public class Main {
 					lexeme = lexicalAnalyzer.nextLexeme(); 
 				}
 			} catch(LexicalException e) {
-				System.err.println("\t" + e.getMessage());
+				System.err.println("\tErro lexico -> " + e.getMessage());
 			}
 
 			

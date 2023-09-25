@@ -14,7 +14,7 @@ public class SymbolTable {
 		
 	public static String toText() {
 		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append("Symbol Table:\n");
+		stringBuilder.append("Tabela de simbolos:\n");
 		
 		if (SymbolTable.symbolTable.size() == 0) {
 			stringBuilder.append("\tNenhum simbolo na registrado");
