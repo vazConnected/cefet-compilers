@@ -1,0 +1,12 @@
+class testeExtra1 
+  string nome1, nome2, nome3, total; 
+  {  
+     write("Digite o nome do integrante 1:"); 
+     read (nome1); 
+     write("Digite o nome do integrante 2:"); 
+     read (nome2);
+     write("Digite o nome do integrante 3:"); 
+     read (nome3); 
+     total = “O grupo é formado por” + nome1 + “, por ” + nome2 + “e por” + nome3;
+     write(total); 
+  }
