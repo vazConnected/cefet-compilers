@@ -3,13 +3,11 @@ package compiler;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Hashtable;
-import java.util.List;
 
 import lexical.Lexeme;
 import lexical.LexicalAnalyzer;
+import lexical.LexicalException;
 import lexical.SymbolTable;
-import lexical.token.TokenType;
 
 public class Main {
 
@@ -26,13 +24,17 @@ public class Main {
 		
 		try {
 			LexicalAnalyzer lexicalAnalyzer = new LexicalAnalyzer(args[0]);
-			
-			System.out.println("\nTokens:");
-			List<Lexeme> lexemes = lexicalAnalyzer.getListOfLexemes();
-			for(Lexeme lexeme: lexemes) {
-				System.out.println("\t" + lexeme);
-				//SymbolTable.addToSymbolTable(lexeme.tokenValue(), lexeme.tokenType()); 
+			System.out.println("Lexemas:");
+			try {
+				Lexeme lexeme = lexicalAnalyzer.nextLexeme();
+				while (lexeme != null) {
+					System.out.println("\t" + lexeme);
+					lexeme = lexicalAnalyzer.nextLexeme(); 
+				}
+			} catch(LexicalException e) {
+				System.err.println("\t" + e.getMessage());
 			}
+
 			
 			System.out.print("\n" + SymbolTable.toText());
 			
