@@ -29,7 +29,25 @@ Para cada etapa haverá um release específico contendo as descrições de uso e
 - A linguagem é case-sensitive.
 - O compilador da linguagem deverá gerar código a ser executado na máquina VM ou para Jasmin. VM é uma máquina virtual simples, porém possui a limitação de ser executada somente em Windows. O arquivo executável e a documentação de de VM estão disponíveis no Moodle. Jasmin é uma ferramenta que produz bytecodes a serem executados na JVM (Java Virtual Machine).
 
-## Gramática da Linguagem
+## Etapas do Compilador
+
+### 1. Análise Léxica e Tabela de Símbolos;
+O papel do analisador léxico é realizar a tokenização do arquivo fonte. Para isso, o seguinte padrão de gerador de tokens foi adotado:
+```
+- constant → integer_const | literal | real_const
+- integer_const → nonzero digit* | 0
+- real_const → interger_const "." digit+
+- literal → " “ " caractere* " ” "
+- identifier → letter {letter | digit | " _ " }
+- letter → [A-Za-z]
+- digit → [0-9]
+- nonzero → [1-9]
+- caractere → um dos 256 caracteres do conjunto ASCII, exceto as aspas e quebra de linha
+```
+
+### 2. Análise Sintática
+Inicialmente, a gramática da linguagem foi definida da seguinte forma:
+```
 - program ::= class identifier [decl-list] body
 - decl-list ::= decl ";" { decl ";"}
 - decl ::= type ident-list
@@ -54,25 +72,11 @@ Para cada etapa haverá um release específico contendo as descrições de uso e
 - relop ::= ">" | ">=" | "<" | "<=" | "!=" | "=="
 - addop ::= "+" | "-" | "||"
 - mulop ::= "*" | "/" | "&&"
-
-## Padrão de formação dos tokens
-- constant → integer_const | literal | real_const
-- integer_const → nonzero digit* | 0
-- real_const → interger_const "." digit+
-- literal → " “ " caractere* " ” "
-- identifier → letter {letter | digit | " _ " }
-- letter → [A-Za-z]
-- digit → [0-9]
-- nonzero → [1-9]
-- caractere → um dos 256 caracteres do conjunto ASCII, exceto as aspas e quebra de linha
-
-## Etapas do Compilador
-
-### 1. Análise Léxica e Tabela de Símbolos;
+```
+Entretanto, para desenvolver o parser, é necessário transformar a gramática em LL(1). A seguir a gramática modificada:
+```
 WIP
-
-### 2. Análise Sintática
-TODO
+```
 
 ### 3. Análise Semântica
 TODO
@@ -82,8 +86,8 @@ TODO
 
 
 ## Releases
-- Analisador Léxico e Tabela de Símbolos: WIP
-- Analisador Sintático: TBA
+- Analisador Léxico e Tabela de Símbolos: [link do release](https://github.com/vazConnected/cefet-compilers/releases/tag/analisador_lexico)
+- Analisador Sintático: WIP
 - Analisador Semântico: TBA
 - Gerador de Código: TBA
 
