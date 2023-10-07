@@ -44,6 +44,7 @@ O papel do analisador léxico é realizar a tokenização do arquivo fonte. Para
 - nonzero → [1-9]
 - caractere → um dos 256 caracteres do conjunto ASCII, exceto as aspas e quebra de linha
 ```
+Para além, tokens comparadores, lógicos e matemáticos, como ```<=```, ```&&``` e ```/```, devem ser identificados corretamente.
 
 ### 2. Análise Sintática
 Inicialmente, a gramática da linguagem foi definida da seguinte forma:
@@ -73,9 +74,46 @@ Inicialmente, a gramática da linguagem foi definida da seguinte forma:
 - addop ::= "+" | "-" | "||"
 - mulop ::= "*" | "/" | "&&"
 ```
-Entretanto, para desenvolver o parser, é necessário transformar a gramática em LL(1). A seguir a gramática modificada:
+Entretanto, para desenvolver o parser recursivo descendente, é necessário transformar a gramática em LL(1). A seguir a gramática modificada:
 ```
-WIP
+program ::= class identifier [decl-list] body
+decl-list ::= decl decl-list'
+decl-list' ::= ";" decl decl-list'
+  | ε
+decl ::= type ident-list
+ident-list ::= identifier ident-list'
+ident-list' ::= "," identifier ident-list'
+  | ε
+type ::= int | string | float
+body ::= "{" stmt-list "}"
+stmt-list ::= stmt stmt-list'
+stmt-list' ::= ";" stmt stmt-list' | ε
+stmt ::= if "(" condition ")" "{" stmt-list "}" stmt-else
+  | identifier "=" simple-expr
+  | do "{" stmt-list "}" do-suffix
+  | read "(" identifier ")"
+  | write "(" writable ")"
+stmt-else ::= else "{" stmt-list "}" | ε
+assign-stmt ::= identifier "=" simple-expr
+if-stmt ::= if "(" condition ")" "{" stmt-list "}" else "{" stmt-list "}"
+  | if "(" condition ")" "{" stmt-list "}"
+condition ::= expression
+do-stmt ::= do "{" stmt-list "}" do-suffix
+do-suffix ::= while "(" condition ")"
+read-stmt ::= read "(" identifier ")"
+write-stmt ::= write "(" writable ")"
+writable ::= simple-expr
+expression ::= simple-expr expression'
+expression' ::= relop simple-expr expression' | ε
+simple-expr ::= term simple-expr'
+simple-expr' ::= addop term simple-expr' | ε
+term ::= factor-a term'
+term' ::= mulop factor-a term' | ε
+factor-a ::= factor | "!" factor | "-" factor
+factor ::= identifier | constant | "(" expression ")"
+relop ::= ">" | ">=" | "<" | "<=" | "!=" | "=="
+addop ::= "+" | "-" | "||"
+mulop ::= "*" | "/" | "&&"
 ```
 
 ### 3. Análise Semântica
