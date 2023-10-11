@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import lexical.Lexeme;
 import lexical.LexicalAnalyzer;
-import lexical.LexicalException;
 import lexical.token.TokenType;
 
 public class SyntacticAnalyzer {
@@ -13,18 +12,22 @@ public class SyntacticAnalyzer {
 	public SyntacticAnalyzer(LexicalAnalyzer lexicalAnalyzer) {
 		this.lexicalAnalyzer = lexicalAnalyzer;
 	}
-	
-	public void run() {
-		throw new RuntimeException("todo: implementar regras");
-	}
-	
-	private void consumeToken(TokenType tokenType) throws IOException, LexicalException, SyntacticException {
+
+	private void consumeToken(TokenType tokenType) throws IOException {
 		Lexeme lexeme = this.lexicalAnalyzer.nextLexeme();
+
 		if (lexeme.tokenType() != tokenType) {
 			throw new SyntacticException("Token esperado: " + tokenType + 
 					". Token Obtido: " + lexeme.tokenType() + 
 					". Erro encontrado na posicao: " + lexeme.position().toString());
 		}
 	}
-	
+
+	public void run() throws IOException {
+		this.consumeToken(TokenType.CLASS);
+		this.consumeToken(TokenType.ID);
+		// this.rule_decllist();
+		// this.rule.body()
+		throw new RuntimeException("todo: implementar demais regras");
+	}
 }

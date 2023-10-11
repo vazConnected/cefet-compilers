@@ -2,7 +2,6 @@ package lexical;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 
 import lexical.token.TokenPosition;
@@ -37,7 +36,7 @@ public class LexicalAnalyzer {
 		this.fileManager.unget(character);
 	}
 
-	public Lexeme nextLexeme() throws IOException, LexicalException {
+	public Lexeme nextLexeme() throws IOException {
 		if (this.fileManager.endOfFileReached())
 			return null;
 
