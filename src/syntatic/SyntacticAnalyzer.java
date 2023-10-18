@@ -129,6 +129,7 @@ public class SyntacticAnalyzer {
 	}
 	
 	// if-stmt ::= if "(" condition ")" "{" stmt-list "}"  | if "(" condition ")" "{" stmt-list "}" else "{" stmt-list "}"
+	
 	// condition ::= expression
 	// do-stmt ::= do "{" stmt-list "}" do-suffix
 	// do-suffix ::= while "(" condition ")"
