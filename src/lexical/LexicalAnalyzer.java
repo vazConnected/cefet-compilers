@@ -35,6 +35,12 @@ public class LexicalAnalyzer {
 		this.chracterInLineCounter--;
 		this.fileManager.unget(character);
 	}
+	
+	public void unget(Lexeme lexeme) throws IOException {
+		for(int i = 0; i < lexeme.tokenValue().length(); i++) {
+			this.unget(lexeme.tokenValue().charAt(i));
+		}
+	}
 
 	public Lexeme nextLexeme() throws IOException {
 		if (this.fileManager.endOfFileReached())
