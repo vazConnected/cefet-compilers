@@ -95,8 +95,39 @@ public class SyntacticAnalyzer {
 	}
 	
 	// stmt-list ::= stmt ";" { stmt ";" }
+	private void rule_stmtList() throws IOException {
+		TokenType nextToken = null;
+		
+		do {
+			this.rule_stmt();
+			this.consumeToken(TokenType.SEMI_COLON);
+			
+			nextToken = this.checkNextLexeme().tokenType();
+		} while (nextToken == TokenType.ID || nextToken == TokenType.IF || nextToken == TokenType.DO ||
+				nextToken == TokenType.READ || nextToken == TokenType.WRITE);
+	}
+	
 	// stmt ::= assign-stmt | if-stmt | do-stmt | read-stmt | write-stmt
+	private void rule_stmt() throws IOException {
+		Lexeme lexeme = this.checkNextLexeme();
+		TokenType nextToken = lexeme.tokenType();
+		
+		if (nextToken == TokenType.ID || nextToken == TokenType.IF || nextToken == TokenType.DO ||
+				nextToken == TokenType.READ || nextToken == TokenType.WRITE) {
+			this.consumeToken(nextToken);
+		} else {
+			throw new SyntacticException("Token inesperado durante a validacao da regra \"stmt\" encontrado em: " + 
+					lexeme.position().toString());
+		}
+	}
+	
 	// assign-stmt ::= identifier "=" simple_expr
+	private void rule_assignStmt() throws IOException {
+		this.consumeToken(TokenType.ID);
+		this.consumeToken(TokenType.ASSIGN);
+		this.rule_simpleExpr();
+	}
+	
 	// if-stmt ::= if "(" condition ")" "{" stmt-list "}"  | if "(" condition ")" "{" stmt-list "}" else "{" stmt-list "}"
 	// condition ::= expression
 	// do-stmt ::= do "{" stmt-list "}" do-suffix
