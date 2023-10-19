@@ -78,31 +78,24 @@ Entretanto, para desenvolver o parser recursivo descendente, é necessário tran
 ```
 program ::= class identifier [decl-list] body
 decl-list ::= decl decl-list'
-decl-list' ::= ";" decl decl-list'
-  | ε
+decl-list' ::= ";" decl decl-list' | ε
 decl ::= type ident-list
 ident-list ::= identifier ident-list'
-ident-list' ::= "," identifier ident-list'
-  | ε
+ident-list' ::= "," identifier ident-list' | ε
 type ::= int | string | float
 body ::= "{" stmt-list "}"
 stmt-list ::= stmt stmt-list'
 stmt-list' ::= ";" stmt stmt-list' | ε
-stmt ::= if "(" condition ")" "{" stmt-list "}" stmt-else
-  | identifier "=" simple-expr
-  | do "{" stmt-list "}" do-suffix
-  | read "(" identifier ")"
-  | write "(" writable ")"
+stmt ::= if-stmt | assign-stmt | do-stmt | read-stmt | write-stmt
+if-stmt ::= if "(" condition ")" "{" stmt-list "}" stmt-else
 stmt-else ::= else "{" stmt-list "}" | ε
 assign-stmt ::= identifier "=" simple-expr
-if-stmt ::= if "(" condition ")" "{" stmt-list "}" else "{" stmt-list "}"
-  | if "(" condition ")" "{" stmt-list "}"
-condition ::= expression
 do-stmt ::= do "{" stmt-list "}" do-suffix
 do-suffix ::= while "(" condition ")"
 read-stmt ::= read "(" identifier ")"
 write-stmt ::= write "(" writable ")"
 writable ::= simple-expr
+condition ::= expression
 expression ::= simple-expr expression'
 expression' ::= relop simple-expr expression' | ε
 simple-expr ::= term simple-expr'
