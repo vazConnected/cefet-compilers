@@ -37,8 +37,10 @@ public class LexicalAnalyzer {
 	}
 	
 	public void unget(Lexeme lexeme) throws IOException {
-		for(int i = 0; i < lexeme.tokenValue().length(); i++) {
-			this.unget(lexeme.tokenValue().charAt(i));
+		String tokenValue = new StringBuilder(lexeme.tokenValue()).reverse().toString();
+		
+		for(int i = 0; i < tokenValue.length(); i++) {
+			this.unget(tokenValue.charAt(i));
 		}
 	}
 
