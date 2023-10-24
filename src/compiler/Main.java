@@ -19,7 +19,6 @@ public class Main {
 				throw new FileNotFoundException("O caminho informado não existe ou não corresponde a um arquivo. Informe um arquivo válido.");
 			}
 		}
-		
 		SyntacticAnalyzer syntacticAnalyzer = new SyntacticAnalyzer(new LexicalAnalyzer(args[0]));
 		syntacticAnalyzer.run();
 	}

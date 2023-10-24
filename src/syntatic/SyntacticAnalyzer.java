@@ -8,38 +8,42 @@ import lexical.token.TokenType;
 
 public class SyntacticAnalyzer {
 	private LexicalAnalyzer lexicalAnalyzer;
+	private Lexeme currentLexeme, lookAhead;
 	
 	public SyntacticAnalyzer(LexicalAnalyzer lexicalAnalyzer) {
 		this.lexicalAnalyzer = lexicalAnalyzer;
 	}
 
-	private void consumeToken(TokenType tokenType) throws IOException {
-		Lexeme lexeme = this.lexicalAnalyzer.nextLexeme();
+	private void consumeToken(TokenType tokenType)  throws IOException {
+		Lexeme lexeme = this.currentLexeme;
 
 		if (lexeme.tokenType() != tokenType) {
-			this.lexicalAnalyzer.unget(lexeme);
 			throw new SyntacticException("Token esperado: " + tokenType + 
 					". Token Obtido: " + lexeme.tokenType() + 
 					". Erro encontrado na posicao: " + lexeme.position().toString());
 		}
+		
+		this.updateCurrentLexeme();
 	}
 	
 	public void run() throws IOException {
+		this.currentLexeme = this.lexicalAnalyzer.nextLexeme();
+		this.lookAhead = this.lexicalAnalyzer.nextLexeme();
 		this.rule_program();
+
+		System.out.println("Análise sintática concluída com sucesso.");
 	}
 	
-	private Lexeme checkNextLexeme() throws IOException {
-		Lexeme lexeme = this.lexicalAnalyzer.nextLexeme();
-		this.lexicalAnalyzer.unget(lexeme);
-		return lexeme;
+	private void updateCurrentLexeme() throws IOException {
+		this.currentLexeme = this.lookAhead;
+		this.lookAhead = this.lexicalAnalyzer.nextLexeme();
 	}
-
+	
 	// program ::= class identifier [decl-list] body
 	private void rule_program() throws IOException {
 		this.consumeToken(TokenType.CLASS);
 		this.consumeToken(TokenType.ID);
-		
-		TokenType nextType = this.checkNextLexeme().tokenType();
+		TokenType nextType = this.currentLexeme.tokenType();
 		if (nextType == TokenType.INT || nextType == TokenType.STRING || nextType == TokenType.FLOAT) {
 			this.rule_declList();
 		}
@@ -55,10 +59,14 @@ public class SyntacticAnalyzer {
 	
 	// decl-list' ::= ";" decl decl-list' | ε
 	private void rule_declList_() throws IOException {
-		TokenType nextType = this.checkNextLexeme().tokenType();
+		
+		TokenType nextType = this.currentLexeme.tokenType();
 		
 		if (nextType == TokenType.SEMI_COLON) {
 			this.consumeToken(TokenType.SEMI_COLON);
+		}
+		nextType = this.currentLexeme.tokenType();
+		if(nextType == TokenType.INT || nextType == TokenType.STRING || nextType == TokenType.FLOAT) {
 			this.rule_decl();
 			this.rule_declList_();
 		}
@@ -78,7 +86,7 @@ public class SyntacticAnalyzer {
 	
 	// ident-list' ::= "," identifier ident-list' | ε
 	private void rule_identList_() throws IOException {
-		TokenType nextType = this.checkNextLexeme().tokenType();
+		TokenType nextType = this.currentLexeme.tokenType();
 		
 		if (nextType == TokenType.COMMA) {
 			this.consumeToken(TokenType.COMMA);
@@ -89,7 +97,7 @@ public class SyntacticAnalyzer {
 	
 	// type ::= int | string | float
 	private void rule_type() throws IOException {
-		Lexeme lexeme = this.checkNextLexeme();
+		Lexeme lexeme = this.currentLexeme;
 		TokenType nextType = lexeme.tokenType();
 		
 		switch (nextType) {
@@ -117,22 +125,22 @@ public class SyntacticAnalyzer {
 		this.rule_stmtList_();
 	}
 	
-	// stmt-list' ::= ";" stmt stmt-list' | ε
+	// stmt-list' ::= ";" stmt stmt-list' | ε 
 	private void rule_stmtList_() throws IOException {
-		TokenType nextToken = this.checkNextLexeme().tokenType();
-		
+		TokenType nextToken = this.currentLexeme.tokenType();
+
 		if (nextToken == TokenType.SEMI_COLON) {
 			this.consumeToken(TokenType.SEMI_COLON);
 			this.rule_stmt();
 			this.rule_stmtList_();
 		}
+		this.rule_stmt();
 	}
 	
-	// stmt ::= if-stmt | assign-stmt | do-stmt | read-stmt | write-stmt
+	// stmt ::= if-stmt | assign-stmt | do-stmt | read-stmt | write-stmt | ε
 	private void rule_stmt() throws IOException {
-		Lexeme lexeme = this.checkNextLexeme();
+		Lexeme lexeme = this.currentLexeme;
 		TokenType nextType = lexeme.tokenType();
-		
 		switch(nextType) {
 			case IF:
 				this.rule_ifStmt();
@@ -150,7 +158,6 @@ public class SyntacticAnalyzer {
 				this.rule_writeStmt();
 				break;
 			default:
-				this.unexpectedTokenError("stmt", lexeme);
 				break;
 		}
 	}
@@ -169,7 +176,7 @@ public class SyntacticAnalyzer {
 	
 	// stmt-else ::= else "{" stmt-list "}" | ε
 	private void rule_stmtElse() throws IOException {
-		TokenType nextToken = this.checkNextLexeme().tokenType();
+		TokenType nextToken = this.currentLexeme.tokenType();
 		
 		if (nextToken == TokenType.ELSE) {
 			this.consumeToken(TokenType.ELSE);
@@ -237,8 +244,7 @@ public class SyntacticAnalyzer {
 	
 	// expression' ::= relop simple-expr expression' | ε
 	private void rule_expression_() throws IOException {
-		TokenType nextType = this.checkNextLexeme().tokenType();
-		
+		TokenType nextType = this.currentLexeme.tokenType();
 		switch (nextType) {
 			case GREATER_THAN:
 			case GREATER_EQUAL:
@@ -262,8 +268,7 @@ public class SyntacticAnalyzer {
 	
 	// simple-expr' ::= addop term simple-expr' | ε
 	private void rule_simpleExpr_() throws IOException {
-		TokenType nextType = this.checkNextLexeme().tokenType();
-		
+		TokenType nextType = this.currentLexeme.tokenType();
 		switch (nextType) {
 			case ADD:
 			case SUB:
@@ -284,8 +289,7 @@ public class SyntacticAnalyzer {
 	
 	// term' ::= mulop factor-a term' | ε
 	private void rule_term_() throws IOException {
-		TokenType nextType = this.checkNextLexeme().tokenType();
-		
+		TokenType nextType = this.currentLexeme.tokenType();
 		switch (nextType) {
 			case MUL:
 			case DIV:
@@ -300,8 +304,7 @@ public class SyntacticAnalyzer {
 	
 	// factor-a ::= factor | "!" factor | "-" factor
 	private void rule_factorA() throws IOException {
-		TokenType nextType = this.checkNextLexeme().tokenType();
-		
+		TokenType nextType = this.currentLexeme.tokenType();
 		if (nextType == TokenType.NOT || nextType == TokenType.SUB) {
 			this.consumeToken(nextType);
 		}
@@ -311,13 +314,13 @@ public class SyntacticAnalyzer {
 	
 	// factor ::= identifier | constant | "(" expression ")"
 	private void rule_factor() throws IOException {
-		Lexeme lexeme = this.checkNextLexeme();
+		Lexeme lexeme = this.currentLexeme;
 		TokenType nextType = lexeme.tokenType();
-		
 		switch (nextType) {
 			case ID:
 			case INT_CONST:
 			case REAL_CONST:
+			case LITERAL:
 				this.consumeToken(nextType);
 				break;
 			case OPEN_PARENTHESIS:
@@ -333,7 +336,7 @@ public class SyntacticAnalyzer {
 	
 	// relop ::= ">" | ">=" | "<" | "<=" | "!=" | "=="
 	private void rule_relop() throws IOException {
-		Lexeme lexeme = this.checkNextLexeme();
+		Lexeme lexeme = this.currentLexeme;
 		TokenType nextType = lexeme.tokenType();
 		
 		switch (nextType) {
@@ -353,7 +356,7 @@ public class SyntacticAnalyzer {
 	
 	// addop ::= "+" | "-" | "||"
 	private void rule_addop() throws IOException {
-		Lexeme lexeme = this.checkNextLexeme();
+		Lexeme lexeme = this.currentLexeme;
 		TokenType nextType = lexeme.tokenType();
 				
 		switch (nextType) {
@@ -370,7 +373,7 @@ public class SyntacticAnalyzer {
 	
 	// mulop ::= "*" | "/" | "&&"
 	private void rule_mulop() throws IOException {
-		Lexeme lexeme = this.checkNextLexeme();
+		Lexeme lexeme = this.currentLexeme;
 		TokenType nextType = lexeme.tokenType();
 		
 		switch (nextType) {

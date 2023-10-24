@@ -36,13 +36,13 @@ public class LexicalAnalyzer {
 		this.fileManager.unget(character);
 	}
 	
-	public void unget(Lexeme lexeme) throws IOException {
+	/*public void unget(Lexeme lexeme) throws IOException {
 		String tokenValue = new StringBuilder(lexeme.tokenValue()).reverse().toString();
 		
 		for(int i = 0; i < tokenValue.length(); i++) {
 			this.unget(tokenValue.charAt(i));
 		}
-	}
+	}*/
 
 	public Lexeme nextLexeme() throws IOException {
 		if (this.fileManager.endOfFileReached())
@@ -86,7 +86,7 @@ public class LexicalAnalyzer {
 							return new Lexeme(this.languageElements.get(tokenValueBuffer), tokenValueBuffer, currentTokenPosition);
 						} else {
 							this.unget(nextChar);
-							return new Lexeme(TokenType.ASSIGN, tokenValueBuffer, currentTokenPosition);
+							return new Lexeme(this.languageElements.get(tokenValueBuffer), tokenValueBuffer, currentTokenPosition);
 						}
 					}
 					
@@ -128,6 +128,7 @@ public class LexicalAnalyzer {
 						tokenValueBuffer += String.valueOf(currentChar);
 						return new Lexeme(this.languageElements.get(String.valueOf(currentChar)), tokenValueBuffer, currentTokenPosition);
 					}
+					
 
 					else { // PADRAO NAO IDENTIFICADO
 						tokenValueBuffer += String.valueOf(currentChar);
