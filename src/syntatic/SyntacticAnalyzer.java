@@ -16,6 +16,8 @@ public class SyntacticAnalyzer {
 
 	private void consumeToken(TokenType tokenType)  throws IOException {
 		Lexeme lexeme = this.currentLexeme;
+		
+		System.out.println(lexeme);
 
 		if (lexeme.tokenType() != tokenType) {
 			throw new SyntacticException("Token esperado: " + tokenType + 

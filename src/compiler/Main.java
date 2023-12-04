@@ -10,7 +10,6 @@ import syntatic.SyntacticAnalyzer;
 public class Main {
 
 	public static void main(String[] args) throws IOException {
-		
 		if (args.length == 0) {
 			throw new IllegalArgumentException("Nenhum arquivo encontrado. É necessário informar o arquivo desejado para a execução do compilador");
 		} else {

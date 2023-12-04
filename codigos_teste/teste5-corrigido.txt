@@ -1,5 +1,5 @@
 class MinhaClasse 
-float a, b, c, maior; 
+float a, b, c; 
 { 
         write("Digite um número");
         read(a); 
