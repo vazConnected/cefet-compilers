@@ -1,10 +1,15 @@
 package syntatic;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 import lexical.Lexeme;
 import lexical.LexicalAnalyzer;
+import lexical.SymbolTable;
 import lexical.token.TokenType;
+import semantic.SemanticAnalyzer;
+import semantic.SemanticException;
 
 public class SyntacticAnalyzer {
 	private LexicalAnalyzer lexicalAnalyzer;
@@ -14,7 +19,7 @@ public class SyntacticAnalyzer {
 		this.lexicalAnalyzer = lexicalAnalyzer;
 	}
 
-	private void consumeToken(TokenType tokenType)  throws IOException {
+	private Lexeme consumeToken(TokenType tokenType)  throws IOException {
 		Lexeme lexeme = this.currentLexeme;
 
 		if (lexeme.tokenType() != tokenType) {
@@ -24,6 +29,8 @@ public class SyntacticAnalyzer {
 		}
 		
 		this.updateCurrentLexeme();
+		
+		return lexeme;
 	}
 	
 	public void run() throws IOException {
@@ -73,30 +80,50 @@ public class SyntacticAnalyzer {
 	}
 	
 	// decl ::= type ident-list
-	private void rule_decl() throws IOException {
-		this.rule_type();
-		this.rule_identList();
+	private TokenType rule_decl() throws IOException {
+		TokenType type = this.rule_type();
+		List<String> identifiers = this.rule_identList();
+		
+		for (String identifier: identifiers) {
+			SymbolTable.registerVariableDeclaration(identifier, type);
+		}
+		
+		return type;
 	}
 	
 	// ident-list ::= identifier ident-list'
-	private void rule_identList() throws IOException {
-		this.consumeToken(TokenType.ID);
-		this.rule_identList_();
+	private List<String> rule_identList() throws IOException {
+		List<String> identifiers = new LinkedList<String>();
+		
+		Lexeme lex = this.consumeToken(TokenType.ID);
+		identifiers.add(lex.tokenValue());
+		
+		List<String> moreIdentifiers = this.rule_identList_();
+		identifiers.addAll(moreIdentifiers);
+		
+		return identifiers;
 	}
 	
 	// ident-list' ::= "," identifier ident-list' | ε
-	private void rule_identList_() throws IOException {
+	private List<String> rule_identList_() throws IOException {
+		List<String> identifiers = new LinkedList<String>();
 		TokenType nextType = this.currentLexeme.tokenType();
 		
 		if (nextType == TokenType.COMMA) {
 			this.consumeToken(TokenType.COMMA);
-			this.consumeToken(TokenType.ID);
-			this.rule_identList_();
+			
+			Lexeme lex = this.consumeToken(TokenType.ID);
+			identifiers.add(lex.tokenValue());
+			
+			List<String> moreIdentifiers = this.rule_identList_();
+			identifiers.addAll(moreIdentifiers);
 		}
+		
+		return identifiers;
 	}
 	
 	// type ::= int | string | float
-	private void rule_type() throws IOException {
+	private TokenType rule_type() throws IOException {
 		Lexeme lexeme = this.currentLexeme;
 		TokenType nextType = lexeme.tokenType();
 		
@@ -110,6 +137,8 @@ public class SyntacticAnalyzer {
 				this.unexpectedTokenError("type", lexeme);
 				break;
 		}
+		
+		return nextType;
 	}
 	
 	// body ::= "{" stmt-list "}"
@@ -211,39 +240,61 @@ public class SyntacticAnalyzer {
 	}
 
 	// read-stmt ::= read "(" identifier ")"
-	private void rule_readStmt() throws IOException {
+	private TokenType rule_readStmt() throws IOException {
 		this.consumeToken(TokenType.READ);
 		this.consumeToken(TokenType.OPEN_PARENTHESIS);
-		this.consumeToken(TokenType.ID);
+		Lexeme lex = this.consumeToken(TokenType.ID);
 		this.consumeToken(TokenType.CLOSE_PARENTHESIS);
+		
+		return lex.tokenType();
 	}
 
 	// write-stmt ::= write "(" writable ")"
-	private void rule_writeStmt() throws IOException {
+	private TokenType rule_writeStmt() throws IOException {
 		this.consumeToken(TokenType.WRITE);
 		this.consumeToken(TokenType.OPEN_PARENTHESIS);
-		this.rule_writable();
+		TokenType type = this.rule_writable();
 		this.consumeToken(TokenType.CLOSE_PARENTHESIS);
+		
+		return type;
 	}
 	
 	// writable ::= simple-expr
-	private void rule_writable() throws IOException {
-		this.rule_simpleExpr();
+	private TokenType rule_writable() throws IOException {
+		return this.rule_simpleExpr();
 	}
 	
 	// condition ::= expression
-	private void rule_condition() throws IOException {
-		this.rule_expression();
+	private TokenType rule_condition() throws IOException {
+		return this.rule_expression();
 	}
 	
 	// expression ::= simple-expr expression'
-	private void rule_expression() throws IOException {
-		this.rule_simpleExpr();
-		this.rule_expression_();
+	private TokenType rule_expression() throws IOException {
+		TokenType simpleExprType = this.rule_simpleExpr();
+		TokenType expressionType = this.rule_expression_();
+		
+		if (expressionType == null && simpleExprType != null) return simpleExprType;
+		else if (expressionType != null && simpleExprType == null) return expressionType;
+	
+		boolean expressionIsNumeric = (expressionType == TokenType.INT || expressionType == TokenType.FLOAT);
+		boolean simpleExprIsNumeric = (simpleExprType == TokenType.INT || simpleExprType == TokenType.FLOAT);
+		
+		if (expressionIsNumeric && simpleExprIsNumeric) {
+			if (simpleExprType == TokenType.FLOAT || expressionType == TokenType.FLOAT) 
+				return TokenType.FLOAT;
+			else if (simpleExprType == TokenType.INT || expressionType == TokenType.INT) 
+				return TokenType.INT;
+		} else {
+			if (  (expressionType == TokenType.STRING && simpleExprType == null) || (expressionType == null && simpleExprType == TokenType.STRING) )
+				return expressionType;
+		}
+
+		throw new SemanticException("Tipos incompatíveis na regra expression: " + simpleExprType + " e " + expressionType);
 	}
 	
 	// expression' ::= relop simple-expr expression' | ε
-	private void rule_expression_() throws IOException {
+	private TokenType rule_expression_() throws IOException {
 		TokenType nextType = this.currentLexeme.tokenType();
 		switch (nextType) {
 			case GREATER_THAN:
@@ -255,87 +306,151 @@ public class SyntacticAnalyzer {
 				this.rule_relop();
 				this.rule_simpleExpr();
 				this.rule_expression_();
-				break;
-			default: return;
+				
+				return TokenType.COMPARE; //TODO verificar
+			default: return null;
 		}
 	}
 	
 	// simple-expr ::= term simple-expr'
-	private void rule_simpleExpr() throws IOException {
-		this.rule_term();
-		this.rule_simpleExpr_();
+	private TokenType rule_simpleExpr() throws IOException {
+		TokenType termType = this.rule_term();
+		TokenType simpleExprType = this.rule_simpleExpr_();
+		
+		if (termType == null && simpleExprType != null) return termType;
+		else if (termType == null && simpleExprType != null) return simpleExprType;
+		
+		boolean termIsNumeric = (termType == TokenType.INT || termType == TokenType.FLOAT);
+		boolean simpleExprIsNumeric = (simpleExprType == TokenType.INT || simpleExprType == TokenType.FLOAT);
+		
+		if (!(termIsNumeric && simpleExprIsNumeric)) {
+			// if (simpleExprType == TokenType.STRING && termType == null)
+				return TokenType.STRING;
+		} else {
+			if (simpleExprType == TokenType.FLOAT || termType == TokenType.FLOAT) 
+				return TokenType.FLOAT;
+			else if (simpleExprType == TokenType.INT || termType == TokenType.INT) 
+				return TokenType.INT;
+		}
+		
+		throw new SemanticException("Tipos icompativeis para operacao: " + termType + " e " + simpleExprType);
 	}
 	
 	// simple-expr' ::= addop term simple-expr' | ε
-	private void rule_simpleExpr_() throws IOException {
+	private TokenType rule_simpleExpr_() throws IOException {
 		TokenType nextType = this.currentLexeme.tokenType();
 		switch (nextType) {
 			case ADD:
 			case SUB:
 			case OR:
 				this.rule_addop();
-				this.rule_term();
-				this.rule_simpleExpr_();
-				break;
-			default: return;
+				
+				TokenType typeTerm = this.rule_term();
+				TokenType typeSimpleExpr = this.rule_simpleExpr_();
+				
+				boolean typeTermIsNumerical = (typeTerm == TokenType.INT || typeTerm != TokenType.FLOAT);
+				boolean typeSimpleExprIsNumerical = (typeSimpleExpr == TokenType.INT || typeSimpleExpr != TokenType.FLOAT);
+				
+				if (typeTermIsNumerical && typeSimpleExprIsNumerical) {
+					if (typeTerm == TokenType.FLOAT || typeSimpleExpr == TokenType.FLOAT) return TokenType.FLOAT;
+					else return TokenType.INT;
+				} else {
+					throw new SemanticException("Comparacao realizara entre dois valores nao numericos detectada.");
+				}
+			default: return null;
 		}
 	}
 	
 	// term ::= factor-a term'
-	private void rule_term() throws IOException {
-		this.rule_factorA();
-		this.rule_term_();
+	private TokenType rule_term() throws IOException {
+		TokenType typeFactorA = this.rule_factorA();
+		TokenType typeTerm_ = this.rule_term_();
+		
+		if (typeTerm_ == null) return typeFactorA;
+		
+		boolean typeFactorAIsNumerical = (typeFactorA == TokenType.INT || typeFactorA != TokenType.FLOAT);
+		boolean typeTerm_IsNumerical = (typeTerm_ == TokenType.INT || typeTerm_ != TokenType.FLOAT);
+		
+		if (typeFactorAIsNumerical && typeTerm_IsNumerical) {
+			if (typeFactorA == TokenType.FLOAT || typeTerm_ == TokenType.FLOAT) return TokenType.FLOAT;
+			else return TokenType.INT;
+		} else {
+			throw new SemanticException("Comparacao realizara entre dois valores nao numericos detectada.");
+		}
 	}
 	
 	// term' ::= mulop factor-a term' | ε
-	private void rule_term_() throws IOException {
+	private TokenType rule_term_() throws IOException {
 		TokenType nextType = this.currentLexeme.tokenType();
 		switch (nextType) {
 			case MUL:
 			case DIV:
 			case AND:
 				this.rule_mulop();
-				this.rule_factorA();
-				this.rule_term_();
-				break;
-			default: return;
+
+				TokenType typeFactorA = this.rule_factorA();
+				TokenType typeTerm_ = this.rule_term_();
+				
+				boolean typeFactorAIsNumerical = (typeFactorA == TokenType.INT || typeFactorA != TokenType.FLOAT);
+				boolean typeTerm_IsNumerical = (typeTerm_ == TokenType.INT || typeTerm_ != TokenType.FLOAT);
+				
+				if (typeFactorAIsNumerical && typeTerm_IsNumerical) {
+					if (typeFactorA == TokenType.FLOAT || typeTerm_ == TokenType.FLOAT) return TokenType.FLOAT;
+					else return TokenType.INT;
+				} else {
+					throw new SemanticException("Comparacao realizara entre dois valores nao numericos detectada.");
+				}
+			default: return null;
 		}
 	}
 	
 	// factor-a ::= factor | "!" factor | "-" factor
-	private void rule_factorA() throws IOException {
+	private TokenType rule_factorA() throws IOException {
 		TokenType nextType = this.currentLexeme.tokenType();
 		if (nextType == TokenType.NOT || nextType == TokenType.SUB) {
 			this.consumeToken(nextType);
 		}
 		
-		this.rule_factor();
+		return this.rule_factor();
 	}
 	
 	// factor ::= identifier | constant | "(" expression ")"
-	private void rule_factor() throws IOException {
+	private TokenType rule_factor() throws IOException {
+		TokenType typeToReurn = null;
+		
 		Lexeme lexeme = this.currentLexeme;
 		TokenType nextType = lexeme.tokenType();
 		switch (nextType) {
 			case ID:
+				typeToReurn = SemanticAnalyzer.getVariableType( this.consumeToken(nextType) );
+				break;
 			case INT_CONST:
+				typeToReurn = TokenType.INT;
+				this.consumeToken(nextType);
+				break;
 			case REAL_CONST:
+				typeToReurn = TokenType.FLOAT;
+				this.consumeToken(nextType);
+				break;
 			case LITERAL:
+				typeToReurn = TokenType.STRING;
 				this.consumeToken(nextType);
 				break;
 			case OPEN_PARENTHESIS:
 				this.consumeToken(TokenType.OPEN_PARENTHESIS);
-				this.rule_expression();
+				typeToReurn = this.rule_expression();
 				this.consumeToken(TokenType.CLOSE_PARENTHESIS);
 				break;
 			default:
 				this.unexpectedTokenError("factor", lexeme);
 				break;
 		}
+		
+		return typeToReurn;
 	}
 	
 	// relop ::= ">" | ">=" | "<" | "<=" | "!=" | "=="
-	private void rule_relop() throws IOException {
+	private TokenType rule_relop() throws IOException {
 		Lexeme lexeme = this.currentLexeme;
 		TokenType nextType = lexeme.tokenType();
 		
@@ -352,10 +467,12 @@ public class SyntacticAnalyzer {
 				this.unexpectedTokenError("relop", lexeme);
 				break;
 		}
+		
+		return nextType;
 	}
 	
 	// addop ::= "+" | "-" | "||"
-	private void rule_addop() throws IOException {
+	private TokenType rule_addop() throws IOException {
 		Lexeme lexeme = this.currentLexeme;
 		TokenType nextType = lexeme.tokenType();
 				
@@ -369,10 +486,12 @@ public class SyntacticAnalyzer {
 				this.unexpectedTokenError("addop", lexeme);
 				break;
 		}
+		
+		return nextType;
 	}
 	
 	// mulop ::= "*" | "/" | "&&"
-	private void rule_mulop() throws IOException {
+	private TokenType rule_mulop() throws IOException {
 		Lexeme lexeme = this.currentLexeme;
 		TokenType nextType = lexeme.tokenType();
 		
@@ -386,6 +505,8 @@ public class SyntacticAnalyzer {
 				this.unexpectedTokenError("mulop", lexeme);
 				break;
 		}
+		
+		return nextType;
 	}
 
 	private void unexpectedTokenError(String ruleName, Lexeme lexeme) throws SyntacticException {

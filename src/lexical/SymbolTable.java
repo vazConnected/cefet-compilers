@@ -6,9 +6,11 @@ import java.util.Map;
 import java.util.Set;
 
 import lexical.token.TokenType;
+import syntatic.SyntacticException;
 
 public class SymbolTable {
 	private static Map<String, TokenType> symbolTable = new HashMap<String, TokenType>();
+	private static Map<String, TokenType> variables = new HashMap<String, TokenType>();
 	
 	private SymbolTable() {}
 		
@@ -38,11 +40,22 @@ public class SymbolTable {
 	}
 	
 	public static boolean contains(String symbol) {
-		return SymbolTable.symbolTable.containsKey(symbol);
+		return symbolTable.containsKey(symbol) || variables.containsKey(symbol);
 	}
 	
 	public static void addToSymbolTable(String symbol, TokenType tokenType){
 		symbolTable.put(symbol, tokenType);
 	}
 
+	public static void registerVariableDeclaration(String identifier, TokenType tokenType) {
+		if (tokenType != TokenType.INT || tokenType != TokenType.FLOAT || tokenType != TokenType.STRING) {
+			throw new SyntacticException("O tipo " + tokenType + "nao e valido para a linguagem");
+		}
+		
+		SymbolTable.variables.put(identifier, tokenType);
+	}
+	
+	public static TokenType getVariableType(String identifier) {
+		return SymbolTable.variables.getOrDefault(identifier, null);
+	}
 }
