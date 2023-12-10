@@ -18,7 +18,7 @@ public enum TokenType {
     INT_CONST,
     REAL_CONST,
     LITERAL,
-    BOOLEAN, 		// Para sinalizar comparacoes relop
+    LOGICAL_EXPRESSION,
     
     // OPERATORS
  	GREATER_THAN,	// >

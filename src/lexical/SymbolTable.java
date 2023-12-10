@@ -48,8 +48,8 @@ public class SymbolTable {
 	}
 
 	public static void registerVariableDeclaration(String identifier, TokenType tokenType) {
-		if (tokenType != TokenType.INT || tokenType != TokenType.FLOAT || tokenType != TokenType.STRING) {
-			throw new SyntacticException("O tipo " + tokenType + "nao e valido para a linguagem");
+		if (tokenType != TokenType.INT && tokenType != TokenType.FLOAT && tokenType != TokenType.STRING) {
+			throw new SyntacticException("O tipo " + tokenType + " nao e valido para a linguagem");
 		}
 		
 		SymbolTable.variables.put(identifier, tokenType);
