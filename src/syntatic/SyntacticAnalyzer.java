@@ -46,6 +46,7 @@ public class SyntacticAnalyzer {
 	private void rule_program() throws IOException {
 		this.consumeToken(TokenType.CLASS);
 		this.consumeToken(TokenType.ID);
+		
 		TokenType nextType = this.currentLexeme.tokenType();
 		if (nextType == TokenType.INT || nextType == TokenType.STRING || nextType == TokenType.FLOAT) {
 			this.rule_declList();
@@ -67,6 +68,8 @@ public class SyntacticAnalyzer {
 
 		if (nextType == TokenType.SEMI_COLON) {
 			this.consumeToken(TokenType.SEMI_COLON);
+//			this.rule_decl();
+//			this.rule_declList_();
 		}
 		nextType = this.currentLexeme.tokenType();
 		if (nextType == TokenType.INT || nextType == TokenType.STRING || nextType == TokenType.FLOAT) {
@@ -76,13 +79,15 @@ public class SyntacticAnalyzer {
 	}
 
 	// decl ::= type ident-list
-	private void rule_decl() throws IOException {
+	private TokenType rule_decl() throws IOException {
 		TokenType type = this.rule_type();
 		List<String> identifiers = this.rule_identList();
 
 		for (String identifier : identifiers) {
 			SymbolTable.registerVariableDeclaration(identifier, type);
 		}
+		
+		return type;
 	}
 
 	// ident-list ::= identifier ident-list'
@@ -213,12 +218,8 @@ public class SyntacticAnalyzer {
 		TokenType variableType = SemanticAnalyzer.getVariableType(idLexeme);
 		boolean simpleExprIsNumeric = (simpleExprType == TokenType.INT || simpleExprType == TokenType.FLOAT);
 
-		if (variableType == simpleExprType)
-			return;
-		if (variableType == TokenType.FLOAT && simpleExprIsNumeric)
-			return;
-		if (variableType == TokenType.INT && simpleExprType == TokenType.INT)
-			return;
+		if (variableType == simpleExprType) return;
+		if (variableType == TokenType.FLOAT && simpleExprIsNumeric) return;
 
 		throw new SemanticException("A variavel " + idLexeme.tokenValue() + " e imcompativel com o tipo "
 				+ simpleExprType + ". \n " + "Erro encontrado na posicao: " + idLexeme.position().toString());
@@ -248,8 +249,6 @@ public class SyntacticAnalyzer {
 		this.consumeToken(TokenType.OPEN_PARENTHESIS);
 		this.consumeToken(TokenType.ID);
 		this.consumeToken(TokenType.CLOSE_PARENTHESIS);
-
-		// return SemanticAnalyzer.getVariableType(lex);
 	}
 
 	// write-stmt ::= write "(" writable ")"
@@ -268,10 +267,11 @@ public class SyntacticAnalyzer {
 	// condition ::= expression
 	private void rule_condition() throws IOException {
 		Lexeme currentLexeme = this.currentLexeme;
+		
 		TokenType type = this.rule_expression();
 
-		if (type != TokenType.LOGICAL_EXPRESSION)
-			throw new SemanticException("E necessario que condicoes seja expressoes logicas. \n"
+		if (type != TokenType.INT)
+			throw new SemanticException("E necessario que condicoes sejam do tipo " + TokenType.INT + ". \n"
 					+ "Erro encontrado na posicao: " + currentLexeme.position().toString());
 	}
 
@@ -280,7 +280,13 @@ public class SyntacticAnalyzer {
 		TokenType simpleExpressionType = this.rule_simpleExpr();
 		TokenType expression_Type = this.rule_expression_();
 
-		return SemanticAnalyzer.getTheMostComprehensiveType(simpleExpressionType, expression_Type);
+		if (expression_Type == TokenType.INT) return TokenType.INT;
+		
+		try {
+			return SemanticAnalyzer.getTheMostComprehensiveType(simpleExpressionType, expression_Type);
+		} catch (SemanticException e) {
+			throw new SemanticException(e.getMessage() + ".\nErro encontrado na posicao: " + currentLexeme.position().toString());
+		}
 	}
 
 	// expression' ::= relop simple-expr expression' | ε
@@ -296,7 +302,7 @@ public class SyntacticAnalyzer {
 			this.rule_relop();
 			this.rule_simpleExpr();
 			this.rule_expression_();
-			return TokenType.LOGICAL_EXPRESSION;
+			return TokenType.INT;
 		default:
 			return null;
 		}
@@ -305,24 +311,36 @@ public class SyntacticAnalyzer {
 	// simple-expr ::= term simple-expr'
 	private TokenType rule_simpleExpr() throws IOException {
 		TokenType termType = this.rule_term();
-		TokenType simpleTermType = this.rule_simpleExpr_();
-
-		return SemanticAnalyzer.getTheMostComprehensiveType(termType, simpleTermType);
+		TokenType simpleTermType_ = this.rule_simpleExpr_();
+		
+		if (simpleTermType_ == null) return termType;
+		try {
+			return SemanticAnalyzer.getTheMostComprehensiveType(termType, simpleTermType_);
+		} catch (SemanticException e) {
+			throw new SemanticException(e.getMessage() + ".\nErro encontrado na posicao: " + currentLexeme.position().toString());
+		}
 	}
 
 	// simple-expr' ::= addop term simple-expr' | ε
-	private TokenType rule_simpleExpr_() throws IOException {
+	private TokenType rule_simpleExpr_() throws IOException {	
 		Lexeme currentLexeme = this.currentLexeme;
 		TokenType nextType = currentLexeme.tokenType();
 		switch (nextType) {
 		case ADD:
 		case SUB:
-		case OR:
 			this.rule_addop();
 			TokenType termType = this.rule_term();
 			TokenType simpleExprType = this.rule_simpleExpr_();
-
-			return SemanticAnalyzer.getTheMostComprehensiveType(termType, simpleExprType);
+			try {
+				return SemanticAnalyzer.getTheMostComprehensiveType(termType, simpleExprType);
+			} catch (SemanticException e) {
+				throw new SemanticException(e.getMessage() + ".\nErro encontrado na posicao: " + currentLexeme.position().toString());
+			}
+		case OR:
+			this.rule_addop();
+			this.rule_term();
+			this.rule_simpleExpr_();
+			return TokenType.INT;
 		default:
 			return null;
 		}
@@ -332,8 +350,14 @@ public class SyntacticAnalyzer {
 	private TokenType rule_term() throws IOException {
 		TokenType factorAType = this.rule_factorA();
 		TokenType termType = this.rule_term_();
+		
+		if (termType == TokenType.INT) return TokenType.INT;
 
-		return SemanticAnalyzer.getTheMostComprehensiveType(factorAType, termType);
+		try {
+			return SemanticAnalyzer.getTheMostComprehensiveType(factorAType, termType);
+		} catch (SemanticException e) {
+			throw new SemanticException(e.getMessage() + ".\nErro encontrado na posicao: " + currentLexeme.position().toString());
+		}
 	}
 
 	// term' ::= mulop factor-a term' | ε
@@ -342,12 +366,19 @@ public class SyntacticAnalyzer {
 		switch (nextType) {
 		case MUL:
 		case DIV:
-		case AND:
 			this.rule_mulop();
 			TokenType factorAType = this.rule_factorA();
 			TokenType term_Type = this.rule_term_();
-
-			return SemanticAnalyzer.getTheMostComprehensiveType(factorAType, term_Type);
+			try {
+				return SemanticAnalyzer.getTheMostComprehensiveType(factorAType, term_Type);
+			} catch (SemanticException e) {
+				throw new SemanticException(e.getMessage() + ".\nErro encontrado na posicao: " + currentLexeme.position().toString());
+			}
+		case AND:
+			this.rule_mulop();
+			this.rule_factorA();
+			this.rule_term_();
+			return TokenType.INT;
 		default:
 			return null;
 		}
@@ -413,36 +444,40 @@ public class SyntacticAnalyzer {
 	}
 
 	// addop ::= "+" | "-" | "||"
-	private void rule_addop() throws IOException {
+	private TokenType rule_addop() throws IOException {
 		Lexeme lexeme = this.currentLexeme;
 		TokenType nextType = lexeme.tokenType();
 
 		switch (nextType) {
 		case ADD:
 		case SUB:
+			this.consumeToken(nextType);
+			return nextType;
 		case OR:
 			this.consumeToken(nextType);
-			break;
+			return TokenType.INT;
 		default:
 			this.unexpectedTokenError("addop", lexeme);
-			break;
-		}
+			return null;
+		}		
 	}
 
 	// mulop ::= "*" | "/" | "&&"
-	private void rule_mulop() throws IOException {
+	private TokenType rule_mulop() throws IOException {
 		Lexeme lexeme = this.currentLexeme;
 		TokenType nextType = lexeme.tokenType();
 
 		switch (nextType) {
 		case MUL:
 		case DIV:
+			this.consumeToken(nextType);
+			return nextType;
 		case AND:
 			this.consumeToken(nextType);
-			break;
+			return TokenType.INT;
 		default:
 			this.unexpectedTokenError("mulop", lexeme);
-			break;
+			return null;
 		}
 	}
 

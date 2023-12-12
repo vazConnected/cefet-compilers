@@ -18,7 +18,6 @@ public enum TokenType {
     INT_CONST,
     REAL_CONST,
     LITERAL,
-    LOGICAL_EXPRESSION,
     
     // OPERATORS
  	GREATER_THAN,	// >

@@ -20,11 +20,7 @@ public class SemanticAnalyzer {
 	
 	public static boolean checkTypeCompatibility(TokenType type1, TokenType type2) {
 		if (validVariableType(type1) && validVariableType(type2)) {
-			if (type1 == TokenType.INT && type2 == TokenType.INT) return true;
-			else if (type1 == type2) return true;
-			else if (type1 == TokenType.FLOAT && type2 == TokenType.INT) return true;
-			else if (type1 == TokenType.INT && type2 == TokenType.FLOAT) return true;
-			else return false;
+			return type1 == type2;
 		}
 		
 		return false;
@@ -41,7 +37,7 @@ public class SemanticAnalyzer {
 		TokenType type = SymbolTable.getVariableType(lex.tokenValue());
 		if (type != null) return type;
 		else {
-			throw new SemanticException("A variavel com identificador " + lex.tokenValue() + " nao foi declarada anteriormente no script.\n " + 
+			throw new SemanticException("A variavel com identificador \"" + lex.tokenValue() + "\" nao foi declarada anteriormente no script.\n " + 
 					"Erro encontrado na posicao: " + lex.position().toString());
 		}
 	}
@@ -72,17 +68,8 @@ public class SemanticAnalyzer {
 		if (type1_ == null) return type2_;
 		else if (type2_ == null) return type1_;
 		else if (type1_ == type2_) return type1_;
-		else if ( checkTypeCompatibility(type1_, type2_) ) {
-			if (type1_ == TokenType.FLOAT || type2_ == TokenType.FLOAT)
-				return TokenType.FLOAT;
-			else if (type1_ == TokenType.STRING || type2_ == TokenType.STRING)
-				return TokenType.STRING;
-			else
-				return TokenType.INT;
-		} else {
+		else 
 			throw new SemanticException("Os tipos " + type1 + " e " + type2 + " nao sao compativeis");
-		}
-		
 	}
 	
 }
