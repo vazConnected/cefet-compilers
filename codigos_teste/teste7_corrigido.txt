@@ -1,5 +1,5 @@
 class testeExtra2 
-  int A, B;
+  int A, B, C;
   float total;
   {  
      write("Digite o valor de A:"); 

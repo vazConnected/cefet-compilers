@@ -6,6 +6,6 @@ class testeExtra2
      read (A);
      write("Digite o valor de B:"); 
      read (B); 
-     float = (A + B) * (B / A)
+     C = (A + B) * (B / A);
      write(A); 
   }

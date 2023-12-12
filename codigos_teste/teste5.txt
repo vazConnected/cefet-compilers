@@ -1,12 +1,12 @@
-class MinhaClasse  
+class MinhaClasse 
+float a, b, c; 
 { 
-    float a, b, c;
         write("Digite um número");
         read(a); 
         write("Digite outro número: "); 
         read(b); 
         write("Digite mais um número: "); 
-        read(c; 
+        read(c); 
         
         maior = 0; 
         

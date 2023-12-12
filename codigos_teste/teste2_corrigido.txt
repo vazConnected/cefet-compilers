@@ -8,7 +8,7 @@ com mais de uma linha */
      b_1 = a * a; 
      write("O valor de b1 e: "); 
      write (b_1); 
-     b_2 = b1 + a/2 * (a + 5); 
+     b_2 = b_1 + a/2 * (a + 5); 
      write("O valor de b2 e: "); 
-     write (b2); 
+     write (b_2); 
   }
