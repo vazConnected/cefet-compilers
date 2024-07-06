@@ -9,7 +9,6 @@ Esse projeto foi desenvolvido em [Java](https://download.oracle.com/java/20/late
 1. Análise Léxica e Tabela de Símbolos;
 2. Análise Sintática
 3. Análise Semântica
-4. Geração do Código
 
 Para cada etapa haverá um release específico contendo as descrições de uso e execução.
 
@@ -110,17 +109,11 @@ mulop ::= "*" | "/" | "&&"
 ```
 
 ### 3. Análise Semântica
-TODO
-
-### 4. Geração do Código
-TODO
-
-
-## Releases
-- Analisador Léxico e Tabela de Símbolos: [link do release](https://github.com/vazConnected/cefet-compilers/releases/tag/analisador_lexico)
-- Analisador Sintático: WIP
-- Analisador Semântico: TBA
-- Gerador de Código: TBA
+A partir das análise léxica e sintática, o analisador semântico executa a verificação da coerência dos tokens e regras da gramática no contexto da linguagem. Diante disso, a árvore sintática e a tabela de símbolos são utilizadas para verificar aspectos como aplicação de escopos e verificação de tipos. Neste projeto foram desenvolvidas os seguintes tratamentos na análise semântica:
+- Verificação de tipos de variáveis;
+- Verificação de compatibilidade de tipos em operações e atribuições;
+- Verificação de declaração de variáveis;
+- Abstração de tipagem de tokens.
 
 ## Autores
 Esse projeto foi desenvolvido para a disciplina de Compiladores pelos seguintes estudantes:
